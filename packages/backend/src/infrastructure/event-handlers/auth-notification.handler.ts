@@ -70,5 +70,74 @@ export class AuthNotificationHandler implements IEventHandler<UserAuthenticated>
 }
 */
 
+interface INotificationService {
+  sendNewDeviceAlert: (params: { userId: string; device: string; location: string; timestamp: Date }) => Promise<void>;
+  sendSecurityAlert: (params: { userId: string; reason: string; details: unknown }) => Promise<void>;
+}
+
+interface ILogger {
+  info: (obj: Record<string, unknown>, msg: string) => void;
+  warn: (obj: Record<string, unknown>, msg: string) => void;
+  error: (obj: Record<string, unknown>, msg: string) => void;
+}
+
+interface IEvent {
+  userId: string;
+  userAgent?: string;
+  occurredAt: Date;
+  getData: () => unknown;
+  getMetadata: () => unknown;
+}
+
 // Temporary export to avoid compilation errors
-export class AuthNotificationHandler {}
+export class AuthNotificationHandler {
+  constructor(
+    private readonly notificationService: INotificationService,
+    private readonly logger: ILogger,
+  ) {}
+
+  async handle(event: IEvent): Promise<void> {
+    // Stub implementation for tests
+    try {
+      if (await this.isNewDevice(event)) {
+        await this.notificationService.sendNewDeviceAlert({
+          userId: event.userId,
+          device: event.userAgent || 'Unknown device',
+          location: 'Unknown location',
+          timestamp: event.occurredAt,
+        });
+        
+        this.logger.info({
+          userId: event.userId,
+          userAgent: event.userAgent,
+        }, 'New device login alert sent');
+      }
+
+      if (await this.isSuspiciousLogin(event)) {
+        await this.notificationService.sendSecurityAlert({
+          userId: event.userId,
+          reason: 'Suspicious login pattern detected',
+          details: event.getData(),
+        });
+        
+        this.logger.warn({
+          userId: event.userId,
+          eventData: event.getData(),
+        }, 'Suspicious login alert sent');
+      }
+    } catch (error) {
+      this.logger.error({
+        error: error instanceof Error ? error.message : error,
+        event: event.getMetadata(),
+      }, 'Failed to send authentication notification');
+    }
+  }
+
+  private async isNewDevice(_event: IEvent): Promise<boolean> {
+    return false;
+  }
+
+  private async isSuspiciousLogin(_event: IEvent): Promise<boolean> {
+    return false;
+  }
+}

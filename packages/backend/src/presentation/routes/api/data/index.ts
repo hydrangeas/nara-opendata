@@ -1,15 +1,17 @@
-import { FastifyPluginAsync } from 'fastify';
-import { Type, Static } from '@sinclair/typebox';
+import { Type } from '@sinclair/typebox';
 import { container } from 'tsyringe';
-import { IDataRetrievalUseCase } from '@/application/interfaces/data-retrieval-use-case.interface';
-import {
-  ISecureFileAccess,
-} from '@/domain/data/interfaces/secure-file-access.interface';
+
+import { DomainError, ErrorType } from '@/domain/errors/domain-error';
 import { DI_TOKENS } from '@/infrastructure/di/tokens';
 import { toProblemDetails } from '@/presentation/errors/error-mapper';
-import { AuthenticatedUser } from '@/domain/auth/value-objects/authenticated-user';
 import { fileSecurityMiddleware } from '@/presentation/middleware/file-security.middleware';
-import { DomainError, ErrorType } from '@/domain/errors/domain-error';
+
+import type { IDataRetrievalUseCase } from '@/application/interfaces/data-retrieval-use-case.interface';
+import type {
+  ISecureFileAccess,
+} from '@/domain/data/interfaces/secure-file-access.interface';
+import type { Static } from '@sinclair/typebox';
+import type { FastifyPluginAsync } from 'fastify';
 
 // パスパラメータのスキーマ
 const DataPathParams = Type.Object({
@@ -20,7 +22,7 @@ const DataPathParams = Type.Object({
 });
 
 // レスポンススキーマ（動的なJSONデータ）
-const DataResponse = Type.Any();
+const DataResponse = Type.Unknown();
 
 // エラーレスポンス
 const ErrorResponse = Type.Object({
@@ -71,7 +73,7 @@ type ListQueryParamsType = Static<typeof ListQueryParams>;
 const dataRoutes: FastifyPluginAsync = async (fastify) => {
   // デバッグ: authenticateが存在するか確認
   if (process.env.NODE_ENV === 'test') {
-    console.log('fastify.authenticate exists?', typeof fastify.authenticate);
+    // console.log('fastify.authenticate exists?', typeof fastify.authenticate);
   }
 
   const dataRetrievalUseCase = container.resolve<IDataRetrievalUseCase>(
@@ -83,7 +85,7 @@ const dataRoutes: FastifyPluginAsync = async (fastify) => {
   // ワイルドカードルートでデータアクセス
   fastify.get<{
     Params: DataPathParamsType;
-    Reply: any | Static<typeof ErrorResponse>;
+    Reply: Static<typeof ErrorResponse>;
   }>(
     '/*',
     {
@@ -139,7 +141,7 @@ const dataRoutes: FastifyPluginAsync = async (fastify) => {
           // この場合は認証ミドルウェアが正しく動作していない
           throw new Error('Authentication middleware did not set request.user');
         }
-        const user = request.user as AuthenticatedUser;
+        const user = request.user;
         const dataPath = request.params['*'];
         // Endpoint and method are used for logging context only
 
@@ -199,9 +201,9 @@ const dataRoutes: FastifyPluginAsync = async (fastify) => {
           let statusCode = 500;
           if (error instanceof DomainError && error.type === ErrorType.NOT_FOUND) {
             statusCode = 404;
-          } else if (error instanceof DomainError && error.type === 'VALIDATION') {
+          } else if (error instanceof DomainError && error.type === ErrorType.VALIDATION) {
             statusCode = 400;
-          } else if (error instanceof DomainError && error.type === 'UNAUTHORIZED') {
+          } else if (error instanceof DomainError && error.type === ErrorType.UNAUTHORIZED) {
             statusCode = 403;
           }
 
@@ -212,7 +214,7 @@ const dataRoutes: FastifyPluginAsync = async (fastify) => {
         const data = result.getValue();
 
         // キャッシュヘッダー
-        reply.headers({
+        void reply.headers({
           'Cache-Control': 'public, max-age=3600',
           ETag: `"${data.checksum}"`,
           'Last-Modified': data.lastModified.toUTCString(),
@@ -233,7 +235,7 @@ const dataRoutes: FastifyPluginAsync = async (fastify) => {
           }
         }
 
-        return reply.send(data.content);
+        return reply.send(data.content as any);
       } catch (error) {
         request.log.error(
           {

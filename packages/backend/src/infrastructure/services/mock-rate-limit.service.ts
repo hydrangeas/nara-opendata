@@ -1,10 +1,11 @@
 import { injectable } from 'tsyringe';
+
 import {
   IRateLimitService,
   RateLimitCheckResult,
 } from '@/domain/api/interfaces/rate-limit-service.interface';
-import { AuthenticatedUser } from '@/domain/auth/value-objects/authenticated-user';
 import { Endpoint as APIEndpoint } from '@/domain/api/value-objects/endpoint';
+import { AuthenticatedUser } from '@/domain/auth/value-objects/authenticated-user';
 
 /**
  * レート制限サービスのモック実装
@@ -16,7 +17,7 @@ export class MockRateLimitService implements IRateLimitService {
   private windowStart = new Date();
 
   async checkLimit(user: AuthenticatedUser, endpoint: APIEndpoint): Promise<RateLimitCheckResult> {
-    const key = `${user.userId.value}:${endpoint.path}`;
+    const key = `${user.userId.value}:${endpoint.path.value}`;
     const currentCount = this.usageMap.get(key) || 0;
     const limit = user.tier.rateLimit.maxRequests;
 
@@ -42,7 +43,7 @@ export class MockRateLimitService implements IRateLimitService {
   }
 
   async recordUsage(user: AuthenticatedUser, endpoint: APIEndpoint): Promise<void> {
-    const key = `${user.userId.value}:${endpoint.path}`;
+    const key = `${user.userId.value}:${endpoint.path.value}`;
     const currentCount = this.usageMap.get(key) || 0;
     this.usageMap.set(key, currentCount + 1);
   }

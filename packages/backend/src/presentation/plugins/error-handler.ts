@@ -1,8 +1,10 @@
-import { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
-import { DomainException } from '../../domain/errors/exceptions';
+
 import { toProblemDetails, mapValidationError } from '../errors/error-mapper';
-import { ProblemDetails } from '../../domain/errors/problem-details';
+
+import type { DomainException } from '../../domain/errors/exceptions';
+import type { ProblemDetails } from '../../domain/errors/problem-details';
+import type { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
 
 /**
  * グローバルエラーハンドラー
@@ -21,7 +23,7 @@ export async function errorHandler(
       requestId: request.id,
       method: request.method,
       url: request.url,
-      userId: (request as any).user?.id,
+      userId: request.user?.userId?.value,
       ip: request.ip,
     },
     'Request error occurred',
@@ -33,11 +35,11 @@ export async function errorHandler(
   }
 
   // Content-Typeを設定
-  reply.header('Content-Type', 'application/problem+json');
+  void reply.header('Content-Type', 'application/problem+json');
 
   // Fastifyバリデーションエラー
   if ('validation' in error && error.validation) {
-    const problemDetails = mapValidationError(error.validation, request.url);
+    const problemDetails = mapValidationError(error.validation as any, request.url);
     return reply.status(problemDetails.status).send(problemDetails);
   }
 
@@ -52,7 +54,7 @@ export async function errorHandler(
  * エラーハンドラープラグイン
  */
 export default fp(
-  async function errorHandlerPlugin(fastify) {
+  function errorHandlerPlugin(fastify) {
     fastify.setErrorHandler(errorHandler);
 
     // 404エラーのカスタムハンドラー
@@ -65,7 +67,7 @@ export default fp(
         instance: request.url,
       };
 
-      reply.status(404).header('Content-Type', 'application/problem+json').send(problemDetails);
+      void reply.status(404).header('Content-Type', 'application/problem+json').send(problemDetails);
     });
   },
   {

@@ -1,6 +1,8 @@
-import { FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
+
 import { setupRequestLogging } from '@/infrastructure/logging';
+
+import type { FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 
 interface LoggingPluginOptions {
   skipPaths?: string[];
@@ -14,7 +16,7 @@ const loggingPlugin: FastifyPluginAsync<LoggingPluginOptions> = async (fastify, 
   setupRequestLogging(fastify);
 
   // 追加のカスタムロギング（ユーザー情報など）
-  fastify.addHook('onResponse', async (request: FastifyRequest, _reply: FastifyReply) => {
+  fastify.addHook('onResponse', (request: FastifyRequest, _reply: FastifyReply) => {
     // スキップするパスの場合はログを出力しない
     if (skipPaths.some((path) => request.url === path || request.url.startsWith(path))) {
       return;
