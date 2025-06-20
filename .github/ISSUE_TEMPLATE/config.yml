@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: プロジェクトドキュメント
+    url: https://github.com/[organization]/nara-opendata/tree/main/docs
+    about: 設計書や仕様書を確認する
+  - name: APIドキュメント
+    url: https://[your-domain]/api-docs
+    about: APIの仕様とテストを確認する
+  - name: ディスカッション
+    url: https://github.com/[organization]/nara-opendata/discussions
+    about: 質問や議論はこちらで

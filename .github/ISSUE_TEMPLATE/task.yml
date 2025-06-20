@@ -1,0 +1,97 @@
+name: タスク
+description: 実装タスクを作成する
+title: "[Task-XXXX]: "
+labels: ["task"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## タスク情報
+        設計書に基づいた実装タスクを記録します。
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 説明
+      description: タスクの詳細な説明を記載してください
+      placeholder: |
+        何を実装するのか、なぜ必要なのかを明確に記載してください。
+        背景や目的を含めて説明してください。
+    validations:
+      required: true
+
+  - type: dropdown
+    id: task-type
+    attributes:
+      label: タスク種別
+      multiple: true
+      options:
+        - 機能実装
+        - バグ修正
+        - リファクタリング
+        - テスト
+        - ドキュメント
+        - 調査
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 優先度
+      options:
+        - 高
+        - 中
+        - 低
+    validations:
+      required: true
+
+  - type: input
+    id: story-points
+    attributes:
+      label: 見積もり工数（ストーリーポイント）
+      description: フィボナッチ数列（1, 2, 3, 5, 8）で入力
+      placeholder: "3"
+    validations:
+      required: true
+
+  - type: input
+    id: dependencies
+    attributes:
+      label: 依存関係
+      description: 前提となるタスク番号をカンマ区切りで記載（例：#0001, #0002）
+      placeholder: "#0001, #0002"
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: 受け入れ基準
+      description: タスク完了の判定基準を記載してください
+      placeholder: |
+        - [ ] 機能Aが実装されている
+        - [ ] 単体テストが作成されている
+        - [ ] ドキュメントが更新されている
+    validations:
+      required: true
+
+  - type: textarea
+    id: technical-details
+    attributes:
+      label: 技術的な詳細
+      description: 実装方法、使用ライブラリ、アーキテクチャの考慮点など
+      placeholder: |
+        - 使用ライブラリ：
+        - 実装パターン：
+        - 注意事項：
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 実装前チェックリスト
+      options:
+        - label: 設計書を確認した
+          required: true
+        - label: 依存タスクが完了している
+          required: false
+        - label: 技術的な実現可能性を確認した
+          required: true

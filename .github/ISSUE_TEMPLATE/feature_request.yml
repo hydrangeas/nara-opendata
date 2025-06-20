@@ -1,0 +1,96 @@
+name: 機能要望
+description: 新機能や改善の提案
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 機能要望
+        新しい機能や既存機能の改善について提案してください。
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 解決したい問題
+      description: この機能がなぜ必要なのか、どんな問題を解決するのか説明してください
+      placeholder: |
+        現在、〜という課題があります。
+        ユーザーは〜する際に不便を感じています。
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: 提案する解決策
+      description: どのような機能や改善を提案するか具体的に説明してください
+      placeholder: |
+        〜という機能を追加することで、
+        ユーザーは〜できるようになります。
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 検討した代替案
+      description: 他に検討した解決方法があれば記載してください
+      placeholder: 他の解決方法や回避策について
+
+  - type: dropdown
+    id: impact
+    attributes:
+      label: 影響範囲
+      options:
+        - 新規機能（既存機能に影響なし）
+        - 既存機能の拡張
+        - 既存機能の変更
+        - アーキテクチャの変更
+    validations:
+      required: true
+
+  - type: dropdown
+    id: user-impact
+    attributes:
+      label: ユーザーへの影響
+      options:
+        - すべてのユーザー
+        - 特定のティアのユーザー
+        - 管理者のみ
+        - 開発者のみ
+    validations:
+      required: true
+
+  - type: textarea
+    id: technical-consideration
+    attributes:
+      label: 技術的な考慮事項
+      description: 実装における技術的な課題や考慮すべき点があれば記載してください
+      placeholder: |
+        - パフォーマンスへの影響
+        - セキュリティの考慮事項
+        - 既存APIとの互換性
+
+  - type: textarea
+    id: mockup
+    attributes:
+      label: モックアップ・例
+      description: UIの変更がある場合は、モックアップや使用例を示してください
+      placeholder: |
+        ```
+        // API使用例
+        GET /api/v2/new-endpoint
+        ```
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 確認事項
+      options:
+        - label: 既存のIssueを検索した
+          required: true
+        - label: 現在の仕様書を確認した
+          required: true
+        - label: 実現可能性を検討した
+          required: false
