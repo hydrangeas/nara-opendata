@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "composite": true,
+    "jsx": "react-jsx"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"],
+  "references": [
+    { "path": "../../packages/shared-kernel" },
+    { "path": "../../packages/libs/types" },
+    { "path": "../../packages/libs/validation" },
+    { "path": "../../packages/libs/utils" }
+  ]
+}

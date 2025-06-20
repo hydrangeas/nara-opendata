@@ -1,0 +1,68 @@
+{
+  "recommendations": [
+    // 必須の拡張機能
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "ms-vscode.vscode-typescript-next",
+    
+    // 開発効率化
+    "usernamehw.errorlens",
+    "streetsidesoftware.code-spell-checker",
+    "yoavbls.pretty-ts-errors",
+    "christian-kohler.path-intellisense",
+    "christian-kohler.npm-intellisense",
+    "formulahendry.auto-rename-tag",
+    "naumovs.color-highlight",
+    "visualstudioexptteam.vscodeintellicode",
+    "visualstudioexptteam.intellicode-api-usage-examples",
+    
+    // React開発
+    "dsznajder.es7-react-js-snippets",
+    "burkeholland.simple-react-snippets",
+    "bradlc.vscode-tailwindcss",
+    "styled-components.vscode-styled-components",
+    
+    // テスト
+    "vitest.explorer",
+    "ms-playwright.playwright",
+    
+    // Git
+    "eamodio.gitlens",
+    "mhutchie.git-graph",
+    "donjayamanne.githistory",
+    
+    // DDD/アーキテクチャ
+    "hediet.vscode-drawio",
+    "jebbs.plantuml",
+    "bierner.markdown-mermaid",
+    
+    // データベース/Supabase
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-pg",
+    
+    // マークダウン
+    "yzhang.markdown-all-in-one",
+    "DavidAnson.vscode-markdownlint",
+    
+    // その他のユーティリティ
+    "mikestead.dotenv",
+    "johnpapa.vscode-peacock",
+    "wayou.vscode-todo-highlight",
+    "gruntfuggly.todo-tree",
+    "alefragnani.Bookmarks",
+    "ritwickdey.LiveServer",
+    
+    // Docker（将来の拡張用）
+    "ms-azuretools.vscode-docker",
+    "ms-vscode-remote.remote-containers"
+  ],
+  "unwantedRecommendations": [
+    // 競合する可能性のある拡張機能
+    "hookyqr.beautify",
+    "HookyQR.beautify",
+    "ms-vscode.vscode-typescript-tslint-plugin",
+    "eg2.tslint",
+    "mike-co.import-sorter",
+    "prisma.prisma"
+  ]
+}

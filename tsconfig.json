@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.base.json",
+  "references": [
+    { "path": "./apps/api" },
+    { "path": "./apps/web" },
+    { "path": "./packages/shared-kernel" },
+    { "path": "./packages/libs/types" },
+    { "path": "./packages/libs/validation" },
+    { "path": "./packages/libs/utils" }
+  ]
+}
