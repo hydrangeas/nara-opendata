@@ -1,22 +1,5 @@
-import 'dotenv/config'
-import { startServer } from './server'
+// TODO: This is a placeholder file for initial setup (issue #14)
+// This file will be replaced with actual implementation in subsequent issues
+// Remove this file and implement the actual API server
 
-// Handle uncaught errors
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error)
-  process.exit(1)
-})
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason)
-  process.exit(1)
-})
-
-// Start the server
-startServer().catch((error) => {
-  console.error('Failed to start server:', error)
-  process.exit(1)
-})
-
-// For Vercel serverless function
-export { buildServer } from './server'
+console.log('API server placeholder');
