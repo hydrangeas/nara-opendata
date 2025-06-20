@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ES2024",
+    // ES2022 target is used for better compatibility with current tooling
+    // ES2024 features are still available through the "lib" option
+    "target": "ES2022",
     "module": "ESNext",
     "lib": ["ES2024", "DOM", "DOM.Iterable"],
     "moduleResolution": "bundler",
@@ -10,7 +12,6 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,

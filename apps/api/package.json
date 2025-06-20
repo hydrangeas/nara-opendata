@@ -7,16 +7,32 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "vitest",
+    "test": "vitest run",
     "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
     "format": "prettier --write '**/*.{ts,json}'",
+    "format:check": "prettier --check '**/*.{ts,json}'",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@nara-opendata/shared-kernel": "workspace:*",
     "@nara-opendata/types": "workspace:*",
     "@nara-opendata/validation": "workspace:*",
-    "@nara-opendata/utils": "workspace:*"
+    "@nara-opendata/utils": "workspace:*",
+    "fastify": "^4.26.0",
+    "@fastify/cors": "^9.0.0",
+    "@fastify/helmet": "^11.1.0",
+    "@fastify/swagger": "^8.14.0",
+    "@fastify/swagger-ui": "^3.0.0",
+    "@scalar/fastify-api-reference": "^1.0.0",
+    "@supabase/supabase-js": "^2.39.0",
+    "dotenv": "^16.4.0",
+    "pino": "^8.17.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.5.0",
+    "vitest": "^1.2.0"
+  }
 }
