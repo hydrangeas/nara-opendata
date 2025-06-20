@@ -9,14 +9,31 @@
     "preview": "vite preview",
     "test": "vitest",
     "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier --write '**/*.{ts,tsx,json}'",
+    "format:check": "prettier --check '**/*.{ts,tsx,json}'",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@nara-opendata/shared-kernel": "workspace:*",
     "@nara-opendata/types": "workspace:*",
     "@nara-opendata/validation": "workspace:*",
-    "@nara-opendata/utils": "workspace:*"
+    "@nara-opendata/utils": "workspace:*",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.21.0",
+    "@supabase/supabase-js": "^2.39.0",
+    "@supabase/auth-ui-react": "^0.4.0",
+    "@supabase/auth-ui-shared": "^0.1.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "typescript": "^5.5.0",
+    "vite": "^5.0.0",
+    "vitest": "^1.2.0",
+    "@playwright/test": "^1.40.0"
+  }
 }

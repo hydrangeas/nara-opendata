@@ -9,9 +9,15 @@
     "build": "tsc",
     "test": "vitest",
     "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
     "format": "prettier --write '**/*.{ts,json}'",
+    "format:check": "prettier --check '**/*.{ts,json}'",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {},
-  "devDependencies": {}
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "vitest": "^2.2.1",
+    "@types/node": "^22.10.6"
+  }
 }
