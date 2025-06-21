@@ -1,2 +1,2 @@
-export * from './AuthenticatedUser'
-export * from './RateLimit'
+export * from './AuthenticatedUser';
+export * from './RateLimit';

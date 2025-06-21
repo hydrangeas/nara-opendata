@@ -1,2 +1,2 @@
 // Shared kernel exports
-export * from './value-objects'
+export * from './value-objects';
