@@ -1,11 +1,15 @@
-// TODO: This is a placeholder test file for initial setup (issue #14)
-// This file will be replaced with actual tests in subsequent issues
-
 import { describe, it, expect } from 'vitest';
-import { placeholder } from './index';
+import { createUserId, equalsUserId, UserTier, TierLevel } from './index';
 
-describe('Placeholder test', () => {
-  it('should be defined', () => {
-    expect(placeholder).toBe('shared-kernel');
+describe('Shared kernel exports', () => {
+  it('should export UserId functions', () => {
+    expect(createUserId).toBeDefined();
+    expect(equalsUserId).toBeDefined();
+  });
+
+  it('should export UserTier class and TierLevel enum', () => {
+    expect(UserTier).toBeDefined();
+    expect(TierLevel).toBeDefined();
+    expect(TierLevel.TIER1).toBe('TIER1');
   });
 });
