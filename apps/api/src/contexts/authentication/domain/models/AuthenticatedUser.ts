@@ -1,4 +1,5 @@
-import { type UserId, UserTier } from '@nara-opendata/shared-kernel';
+import type { UserId } from '@nara-opendata/shared-kernel';
+import type { UserTier } from '@nara-opendata/shared-kernel';
 import { RateLimit } from './RateLimit';
 
 /**
@@ -9,7 +10,7 @@ export class AuthenticatedUser {
     private readonly _userId: UserId,
     private readonly _userTier: UserTier,
     private readonly _rateLimit: RateLimit,
-    private readonly _customRateLimit: boolean = false,
+    private readonly _customRateLimit = false,
   ) {}
 
   /**

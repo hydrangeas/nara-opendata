@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TierLevel } from '@nara-opendata/shared-kernel';
-import { AuthenticationService, type JWTPayload } from './AuthenticationService';
+import { AuthenticationService, type IJWTPayload } from './AuthenticationService';
 
 describe('AuthenticationService', () => {
   const validUserId = '123e4567-e89b-12d3-a456-426614174000';
 
   describe('createUserFromJWT', () => {
     it('最小限のペイロードからユーザーを作成できる', () => {
-      const payload: JWTPayload = {
+      const payload: IJWTPayload = {
         sub: validUserId,
       };
 
@@ -20,7 +20,7 @@ describe('AuthenticationService', () => {
     });
 
     it('ティア情報を含むペイロードからユーザーを作成できる', () => {
-      const payload: JWTPayload = {
+      const payload: IJWTPayload = {
         sub: validUserId,
         app_metadata: {
           tier: 'TIER2',
@@ -35,7 +35,7 @@ describe('AuthenticationService', () => {
     });
 
     it('カスタムレート制限を含むペイロードからユーザーを作成できる', () => {
-      const payload: JWTPayload = {
+      const payload: IJWTPayload = {
         sub: validUserId,
         app_metadata: {
           tier: 'TIER1',
@@ -56,7 +56,7 @@ describe('AuthenticationService', () => {
     });
 
     it('無効なユーザーIDの場合エラーになる', () => {
-      const payload: JWTPayload = {
+      const payload: IJWTPayload = {
         sub: 'invalid-uuid',
       };
 
@@ -66,7 +66,7 @@ describe('AuthenticationService', () => {
     });
 
     it('無効なティアの場合エラーになる', () => {
-      const payload: JWTPayload = {
+      const payload: IJWTPayload = {
         sub: validUserId,
         app_metadata: {
           tier: 'TIER99',
@@ -92,7 +92,7 @@ describe('AuthenticationService', () => {
       const now = new Date('2024-01-01T12:00:00Z');
       vi.setSystemTime(now);
 
-      const payload: JWTPayload = {
+      const payload: IJWTPayload = {
         sub: validUserId,
         exp: Math.floor(now.getTime() / 1000) - 1, // 1秒前に期限切れ
       };
@@ -104,7 +104,7 @@ describe('AuthenticationService', () => {
       const now = new Date('2024-01-01T12:00:00Z');
       vi.setSystemTime(now);
 
-      const payload: JWTPayload = {
+      const payload: IJWTPayload = {
         sub: validUserId,
         exp: Math.floor(now.getTime() / 1000) + 3600, // 1時間後に期限切れ
       };
@@ -113,7 +113,7 @@ describe('AuthenticationService', () => {
     });
 
     it('expがない場合は期限切れとして扱う', () => {
-      const payload: JWTPayload = {
+      const payload: IJWTPayload = {
         sub: validUserId,
       };
 
@@ -134,7 +134,7 @@ describe('AuthenticationService', () => {
       const now = new Date('2024-01-01T12:00:00Z');
       vi.setSystemTime(now);
 
-      const payload: JWTPayload = {
+      const payload: IJWTPayload = {
         sub: validUserId,
         iat: Math.floor(now.getTime() / 1000) + 120, // 2分後に発行
       };
@@ -146,7 +146,7 @@ describe('AuthenticationService', () => {
       const now = new Date('2024-01-01T12:00:00Z');
       vi.setSystemTime(now);
 
-      const payload: JWTPayload = {
+      const payload: IJWTPayload = {
         sub: validUserId,
         iat: Math.floor(now.getTime() / 1000) - 60, // 1分前に発行
       };
@@ -158,7 +158,7 @@ describe('AuthenticationService', () => {
       const now = new Date('2024-01-01T12:00:00Z');
       vi.setSystemTime(now);
 
-      const payload: JWTPayload = {
+      const payload: IJWTPayload = {
         sub: validUserId,
         iat: Math.floor(now.getTime() / 1000) + 30, // 30秒後に発行（許容範囲内）
       };
@@ -167,7 +167,7 @@ describe('AuthenticationService', () => {
     });
 
     it('iatがない場合は許可する', () => {
-      const payload: JWTPayload = {
+      const payload: IJWTPayload = {
         sub: validUserId,
       };
 
@@ -188,7 +188,7 @@ describe('AuthenticationService', () => {
       const now = new Date('2024-01-01T12:00:00Z');
       vi.setSystemTime(now);
 
-      const payload: JWTPayload = { sub: validUserId };
+      const payload: IJWTPayload = { sub: validUserId };
       const user = AuthenticationService.createUserFromJWT(payload);
       const windowStartTime = new Date('2024-01-01T11:59:30Z'); // 30秒前
 
@@ -202,7 +202,7 @@ describe('AuthenticationService', () => {
       const now = new Date('2024-01-01T12:00:00Z');
       vi.setSystemTime(now);
 
-      const payload: JWTPayload = { sub: validUserId };
+      const payload: IJWTPayload = { sub: validUserId };
       const user = AuthenticationService.createUserFromJWT(payload);
       const windowStartTime = new Date('2024-01-01T11:59:30Z');
 
@@ -216,7 +216,7 @@ describe('AuthenticationService', () => {
       const now = new Date('2024-01-01T12:01:00Z');
       vi.setSystemTime(now);
 
-      const payload: JWTPayload = { sub: validUserId };
+      const payload: IJWTPayload = { sub: validUserId };
       const user = AuthenticationService.createUserFromJWT(payload);
       const windowStartTime = new Date('2024-01-01T11:59:00Z'); // 2分前
 

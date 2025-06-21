@@ -5,7 +5,7 @@ import { RateLimit } from '../models/RateLimit';
 /**
  * JWTトークンのペイロード型
  */
-export interface JWTPayload {
+export interface IJWTPayload {
   sub: string;
   email?: string;
   app_metadata?: {
@@ -22,11 +22,11 @@ export interface JWTPayload {
 /**
  * 認証に関するドメインサービス
  */
-export class AuthenticationService {
+export const AuthenticationService = {
   /**
    * JWTペイロードからAuthenticatedUserを作成する
    */
-  static createUserFromJWT(payload: JWTPayload): AuthenticatedUser {
+  createUserFromJWT(payload: IJWTPayload): AuthenticatedUser {
     // ユーザーIDの抽出
     const userId = createUserId(payload.sub);
 
@@ -46,24 +46,24 @@ export class AuthenticationService {
 
     // デフォルトレート制限で作成
     return AuthenticatedUser.create(userId, userTier);
-  }
+  },
 
   /**
    * トークンの有効期限を検証する
    */
-  static isTokenExpired(payload: JWTPayload): boolean {
+  isTokenExpired(payload: IJWTPayload): boolean {
     if (!payload.exp) {
       return true; // 有効期限がない場合は期限切れとして扱う
     }
 
     const now = Math.floor(Date.now() / 1000);
     return payload.exp < now;
-  }
+  },
 
   /**
    * トークンの発行時刻を検証する（未来のトークンを拒否）
    */
-  static isTokenFromFuture(payload: JWTPayload): boolean {
+  isTokenFromFuture(payload: IJWTPayload): boolean {
     if (!payload.iat) {
       return false; // 発行時刻がない場合は許可
     }
@@ -71,13 +71,13 @@ export class AuthenticationService {
     const now = Math.floor(Date.now() / 1000);
     const clockSkew = 60; // 60秒の時刻ずれを許容
     return payload.iat > now + clockSkew;
-  }
+  },
 
   /**
    * レート制限を確認する
    * @returns 制限内の場合true、制限を超えた場合false
    */
-  static checkRateLimit(
+  checkRateLimit(
     user: AuthenticatedUser,
     currentRequestCount: number,
     windowStartTime: Date,
@@ -99,14 +99,14 @@ export class AuthenticationService {
       allowed,
       resetTime: windowEndTime,
     };
-  }
+  },
 
   /**
    * 次のリクエストが可能になるまでの秒数を計算する
    */
-  static calculateRetryAfterSeconds(resetTime: Date): number {
+  calculateRetryAfterSeconds(resetTime: Date): number {
     const now = new Date();
     const diff = resetTime.getTime() - now.getTime();
     return Math.max(0, Math.ceil(diff / 1000));
-  }
-}
+  },
+} as const;
