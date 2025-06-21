@@ -1,0 +1,114 @@
+import { UserTier, TierLevel, createUserId } from '@nara-opendata/shared-kernel'
+import { AuthenticatedUser } from '../models/AuthenticatedUser'
+import { RateLimit } from '../models/RateLimit'
+
+/**
+ * JWTトークンのペイロード型
+ */
+export interface JWTPayload {
+  sub: string
+  email?: string
+  app_metadata?: {
+    tier?: string
+    custom_rate_limit?: {
+      limit: number
+      window_seconds: number
+    }
+  }
+  exp?: number
+  iat?: number
+}
+
+/**
+ * 認証に関するドメインサービス
+ */
+export class AuthenticationService {
+  /**
+   * JWTペイロードからAuthenticatedUserを作成する
+   */
+  static createUserFromJWT(payload: JWTPayload): AuthenticatedUser {
+    // ユーザーIDの抽出
+    const userId = createUserId(payload.sub)
+
+    // ティアの抽出（デフォルトはTIER1）
+    const tierString = payload.app_metadata?.tier || TierLevel.TIER1
+    const userTier = UserTier.fromString(tierString)
+
+    // カスタムレート制限の確認
+    const customRateLimitData = payload.app_metadata?.custom_rate_limit
+    if (customRateLimitData) {
+      const customRateLimit = RateLimit.create(
+        customRateLimitData.limit,
+        customRateLimitData.window_seconds
+      )
+      return AuthenticatedUser.createWithCustomRateLimit(userId, userTier, customRateLimit)
+    }
+
+    // デフォルトレート制限で作成
+    return AuthenticatedUser.create(userId, userTier)
+  }
+
+  /**
+   * トークンの有効期限を検証する
+   */
+  static isTokenExpired(payload: JWTPayload): boolean {
+    if (!payload.exp) {
+      return true // 有効期限がない場合は期限切れとして扱う
+    }
+
+    const now = Math.floor(Date.now() / 1000)
+    return payload.exp < now
+  }
+
+  /**
+   * トークンの発行時刻を検証する（未来のトークンを拒否）
+   */
+  static isTokenFromFuture(payload: JWTPayload): boolean {
+    if (!payload.iat) {
+      return false // 発行時刻がない場合は許可
+    }
+
+    const now = Math.floor(Date.now() / 1000)
+    const clockSkew = 60 // 60秒の時刻ずれを許容
+    return payload.iat > now + clockSkew
+  }
+
+  /**
+   * レート制限を確認する
+   * @returns 制限内の場合true、制限を超えた場合false
+   */
+  static checkRateLimit(
+    user: AuthenticatedUser,
+    currentRequestCount: number,
+    windowStartTime: Date
+  ): { allowed: boolean; resetTime: Date } {
+    const now = new Date()
+    const windowEndTime = new Date(
+      windowStartTime.getTime() + user.rateLimit.windowSeconds * 1000
+    )
+
+    // ウィンドウが過ぎている場合は新しいウィンドウ
+    if (now >= windowEndTime) {
+      return {
+        allowed: true,
+        resetTime: new Date(now.getTime() + user.rateLimit.windowSeconds * 1000)
+      }
+    }
+
+    // 現在のウィンドウ内でのチェック
+    const allowed = currentRequestCount < user.rateLimit.limit
+    return {
+      allowed,
+      resetTime: windowEndTime
+    }
+  }
+
+  /**
+   * 次のリクエストが可能になるまでの秒数を計算する
+   */
+  static calculateRetryAfterSeconds(resetTime: Date): number {
+    const now = new Date()
+    const diff = resetTime.getTime() - now.getTime()
+    return Math.max(0, Math.ceil(diff / 1000))
+  }
+}
