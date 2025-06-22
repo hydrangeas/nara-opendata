@@ -9,57 +9,56 @@ export enum TierLevel {
 
 /**
  * ユーザーティアを表すバリューオブジェクト
+ * ブランド型を使用してTierLevel型と区別する
  */
-export class UserTier {
-  private constructor(private readonly _level: TierLevel) {}
+export type UserTier = TierLevel & { readonly brand: unique symbol };
 
-  /**
-   * ティアレベルを取得する
-   */
-  get level(): TierLevel {
-    return this._level;
-  }
+/**
+ * UserTierを作成する
+ */
+export function createUserTier(level: TierLevel): UserTier {
+  return level as UserTier;
+}
 
-  /**
-   * デフォルトレート制限を取得する
-   */
-  get defaultRateLimit(): { limit: number; windowSeconds: number } {
-    const rateLimits = {
-      [TierLevel.TIER1]: { limit: 60, windowSeconds: 60 },
-      [TierLevel.TIER2]: { limit: 120, windowSeconds: 60 },
-      [TierLevel.TIER3]: { limit: 300, windowSeconds: 60 },
-    };
-    return rateLimits[this._level];
+/**
+ * 文字列からUserTierを作成する
+ */
+export function createUserTierFromString(value: string): UserTier {
+  if (!Object.values(TierLevel).includes(value as TierLevel)) {
+    throw new Error(`Invalid tier level: ${value}`);
   }
+  return value as UserTier;
+}
 
-  /**
-   * UserTierを作成する
-   */
-  static create(level: TierLevel): UserTier {
-    return new UserTier(level);
-  }
+/**
+ * UserTierからTierLevelを取得する
+ */
+export function getUserTierLevel(tier: UserTier): TierLevel {
+  return tier as TierLevel;
+}
 
-  /**
-   * 文字列からUserTierを作成する
-   */
-  static fromString(value: string): UserTier {
-    if (!Object.values(TierLevel).includes(value as TierLevel)) {
-      throw new Error(`Invalid tier level: ${value}`);
-    }
-    return new UserTier(value as TierLevel);
-  }
+/**
+ * UserTierのデフォルトレート制限を取得する
+ */
+export function getUserTierDefaultRateLimit(tier: UserTier): { limit: number; windowSeconds: number } {
+  const rateLimits = {
+    [TierLevel.TIER1]: { limit: 60, windowSeconds: 60 },
+    [TierLevel.TIER2]: { limit: 120, windowSeconds: 60 },
+    [TierLevel.TIER3]: { limit: 300, windowSeconds: 60 },
+  };
+  return rateLimits[tier as TierLevel];
+}
 
-  /**
-   * 等価性を判定する
-   */
-  equals(other: UserTier): boolean {
-    return this._level === other._level;
-  }
+/**
+ * UserTierの等価性を比較する
+ */
+export function equalsUserTier(a: UserTier, b: UserTier): boolean {
+  return a === b;
+}
 
-  /**
-   * 文字列表現を返す
-   */
-  toString(): string {
-    return this._level;
-  }
+/**
+ * UserTierを文字列に変換する
+ */
+export function userTierToString(tier: UserTier): string {
+  return tier as string;
 }
