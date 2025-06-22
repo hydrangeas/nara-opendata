@@ -12,13 +12,15 @@ export function createUserId(value: string): UserId {
     throw new Error('UserId cannot be empty');
   }
 
-  // UUID形式の検証（Supabase Authで使用される形式）
+  // UUID形式の検証（大文字小文字を区別しない）
+  // /iフラグにより、[0-9a-f]は[0-9a-fA-F]と同じ意味になる
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(value)) {
     throw new Error('UserId must be a valid UUID');
   }
 
-  return value as UserId;
+  // 小文字に正規化して保存（一貫性のため）
+  return value.toLowerCase() as UserId;
 }
 
 /**
