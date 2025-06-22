@@ -14,20 +14,18 @@ export enum TierLevel {
 export type UserTier = TierLevel & { readonly brand: unique symbol };
 
 /**
+ * レート制限の設定を表す型
+ */
+export interface IRateLimitConfig {
+  limit: number;
+  windowSeconds: number;
+}
+
+/**
  * UserTierを作成する
  */
 export function createUserTier(level: TierLevel): UserTier {
   return level as UserTier;
-}
-
-/**
- * 文字列からUserTierを作成する
- */
-export function createUserTierFromString(value: string): UserTier {
-  if (!Object.values(TierLevel).includes(value as TierLevel)) {
-    throw new Error(`Invalid tier level: ${value}`);
-  }
-  return value as UserTier;
 }
 
 /**
@@ -40,11 +38,8 @@ export function getUserTierLevel(tier: UserTier): TierLevel {
 /**
  * UserTierのデフォルトレート制限を取得する
  */
-export function getUserTierDefaultRateLimit(tier: UserTier): {
-  limit: number;
-  windowSeconds: number;
-} {
-  const rateLimits = {
+export function getUserTierDefaultRateLimit(tier: UserTier): IRateLimitConfig {
+  const rateLimits: Record<TierLevel, IRateLimitConfig> = {
     [TierLevel.TIER1]: { limit: 60, windowSeconds: 60 },
     [TierLevel.TIER2]: { limit: 120, windowSeconds: 60 },
     [TierLevel.TIER3]: { limit: 300, windowSeconds: 60 },

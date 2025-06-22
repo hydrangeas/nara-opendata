@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import {
   TierLevel,
   createUserTier,
-  createUserTierFromString,
   getUserTierLevel,
   getUserTierDefaultRateLimit,
   equalsUserTier,
@@ -22,33 +21,25 @@ describe('UserTier', () => {
     });
   });
 
-  describe('createUserTierFromString', () => {
-    it('有効な文字列からUserTierを作成できる', () => {
-      const tier1 = createUserTierFromString('TIER1');
-      const tier2 = createUserTierFromString('TIER2');
-      const tier3 = createUserTierFromString('TIER3');
-
-      expect(getUserTierLevel(tier1)).toBe(TierLevel.TIER1);
-      expect(getUserTierLevel(tier2)).toBe(TierLevel.TIER2);
-      expect(getUserTierLevel(tier3)).toBe(TierLevel.TIER3);
-    });
-
-    it('無効な文字列を拒否する', () => {
-      expect(() => createUserTierFromString('TIER4')).toThrow('Invalid tier level: TIER4');
-      expect(() => createUserTierFromString('tier1')).toThrow('Invalid tier level: tier1');
-      expect(() => createUserTierFromString('')).toThrow('Invalid tier level: ');
-    });
-  });
-
   describe('getUserTierDefaultRateLimit', () => {
     it('各ティアの正しいレート制限を返す', () => {
       const tier1 = createUserTier(TierLevel.TIER1);
       const tier2 = createUserTier(TierLevel.TIER2);
       const tier3 = createUserTier(TierLevel.TIER3);
 
-      expect(getUserTierDefaultRateLimit(tier1)).toEqual({ limit: 60, windowSeconds: 60 });
-      expect(getUserTierDefaultRateLimit(tier2)).toEqual({ limit: 120, windowSeconds: 60 });
-      expect(getUserTierDefaultRateLimit(tier3)).toEqual({ limit: 300, windowSeconds: 60 });
+      const rateLimit1 = getUserTierDefaultRateLimit(tier1);
+      const rateLimit2 = getUserTierDefaultRateLimit(tier2);
+      const rateLimit3 = getUserTierDefaultRateLimit(tier3);
+
+      // 戻り値が正しい型を持つことを確認（TypeScriptの型推論をテスト）
+      expect(rateLimit1.limit).toBe(60);
+      expect(rateLimit1.windowSeconds).toBe(60);
+
+      expect(rateLimit2.limit).toBe(120);
+      expect(rateLimit2.windowSeconds).toBe(60);
+
+      expect(rateLimit3.limit).toBe(300);
+      expect(rateLimit3.windowSeconds).toBe(60);
     });
   });
 
