@@ -1,118 +1,87 @@
 import { describe, it, expect } from 'vitest';
-import { createUserId, UserTier, TierLevel } from '@nara-opendata/shared-kernel';
+import { createUserId } from '@nara-opendata/shared-kernel';
 import { AuthenticatedUser } from './AuthenticatedUser';
-import { RateLimit } from './RateLimit';
+import { RateLimit, RateLimitSource } from './RateLimit';
 
 describe('AuthenticatedUser', () => {
   const testUserId = createUserId('123e4567-e89b-12d3-a456-426614174000');
-  const tier1 = UserTier.create(TierLevel.TIER1);
-  const tier2 = UserTier.create(TierLevel.TIER2);
-  const tier3 = UserTier.create(TierLevel.TIER3);
 
   describe('create', () => {
-    it('デフォルトレート制限でユーザーを作成できる', () => {
-      const user = AuthenticatedUser.create(testUserId, tier1);
+    it('ユーザーIDとレート制限でユーザーを作成できる', () => {
+      const rateLimit = RateLimit.createDefault('TIER1');
+      const user = AuthenticatedUser.create(testUserId, rateLimit);
 
       expect(user.userId).toBe(testUserId);
-      expect(user.userTier).toBe(tier1);
+      expect(user.rateLimit).toBe(rateLimit);
       expect(user.rateLimit.limit).toBe(60);
       expect(user.rateLimit.windowSeconds).toBe(60);
-      expect(user.hasCustomRateLimit).toBe(false);
+      expect(user.rateLimit.source).toBe(RateLimitSource.TIER1_DEFAULT);
     });
 
-    it('各ティアに応じたデフォルトレート制限が設定される', () => {
-      const user1 = AuthenticatedUser.create(testUserId, tier1);
-      const user2 = AuthenticatedUser.create(testUserId, tier2);
-      const user3 = AuthenticatedUser.create(testUserId, tier3);
+    it('各ティアのデフォルトレート制限でユーザーを作成できる', () => {
+      const rateLimit1 = RateLimit.createDefault('TIER1');
+      const rateLimit2 = RateLimit.createDefault('TIER2');
+      const rateLimit3 = RateLimit.createDefault('TIER3');
+
+      const user1 = AuthenticatedUser.create(testUserId, rateLimit1);
+      const user2 = AuthenticatedUser.create(testUserId, rateLimit2);
+      const user3 = AuthenticatedUser.create(testUserId, rateLimit3);
 
       expect(user1.rateLimit.limit).toBe(60);
+      expect(user1.rateLimit.source).toBe(RateLimitSource.TIER1_DEFAULT);
       expect(user2.rateLimit.limit).toBe(120);
+      expect(user2.rateLimit.source).toBe(RateLimitSource.TIER2_DEFAULT);
       expect(user3.rateLimit.limit).toBe(300);
+      expect(user3.rateLimit.source).toBe(RateLimitSource.TIER3_DEFAULT);
     });
-  });
 
-  describe('createWithCustomRateLimit', () => {
     it('カスタムレート制限でユーザーを作成できる', () => {
-      const customRateLimit = RateLimit.create(500, 60);
-      const user = AuthenticatedUser.createWithCustomRateLimit(testUserId, tier1, customRateLimit);
+      const customRateLimit = RateLimit.createCustom(500, 60);
+      const user = AuthenticatedUser.create(testUserId, customRateLimit);
 
       expect(user.userId).toBe(testUserId);
-      expect(user.userTier).toBe(tier1);
       expect(user.rateLimit).toBe(customRateLimit);
-      expect(user.hasCustomRateLimit).toBe(true);
+      expect(user.rateLimit.limit).toBe(500);
+      expect(user.rateLimit.windowSeconds).toBe(60);
+      expect(user.rateLimit.source).toBe(RateLimitSource.CUSTOM);
+      expect(user.rateLimit.isCustom).toBe(true);
     });
   });
 
   describe('equals', () => {
     it('同じ属性のユーザーは等しい', () => {
-      const user1 = AuthenticatedUser.create(testUserId, tier1);
-      const user2 = AuthenticatedUser.create(testUserId, tier1);
+      const rateLimit = RateLimit.createDefault('TIER1');
+      const user1 = AuthenticatedUser.create(testUserId, rateLimit);
+      const user2 = AuthenticatedUser.create(testUserId, rateLimit);
 
       expect(user1.equals(user2)).toBe(true);
     });
 
     it('異なるユーザーIDのユーザーは等しくない', () => {
       const otherId = createUserId('987f6543-e21b-12d3-a456-426614174000');
-      const user1 = AuthenticatedUser.create(testUserId, tier1);
-      const user2 = AuthenticatedUser.create(otherId, tier1);
-
-      expect(user1.equals(user2)).toBe(false);
-    });
-
-    it('異なるティアのユーザーは等しくない', () => {
-      const user1 = AuthenticatedUser.create(testUserId, tier1);
-      const user2 = AuthenticatedUser.create(testUserId, tier2);
+      const rateLimit = RateLimit.createDefault('TIER1');
+      const user1 = AuthenticatedUser.create(testUserId, rateLimit);
+      const user2 = AuthenticatedUser.create(otherId, rateLimit);
 
       expect(user1.equals(user2)).toBe(false);
     });
 
     it('異なるレート制限のユーザーは等しくない', () => {
-      const customRateLimit = RateLimit.create(100, 60);
-      const user1 = AuthenticatedUser.create(testUserId, tier1);
-      const user2 = AuthenticatedUser.createWithCustomRateLimit(testUserId, tier1, customRateLimit);
+      const rateLimit1 = RateLimit.createDefault('TIER1');
+      const rateLimit2 = RateLimit.createDefault('TIER2');
+      const user1 = AuthenticatedUser.create(testUserId, rateLimit1);
+      const user2 = AuthenticatedUser.create(testUserId, rateLimit2);
 
       expect(user1.equals(user2)).toBe(false);
     });
-  });
 
-  describe('withRateLimit', () => {
-    it('レート制限を変更した新しいインスタンスを作成する', () => {
-      const user = AuthenticatedUser.create(testUserId, tier1);
-      const newRateLimit = RateLimit.create(100, 60);
-      const updatedUser = user.withRateLimit(newRateLimit);
+    it('同じ値でも由来が異なるレート制限のユーザーは等しくない', () => {
+      const defaultRateLimit = RateLimit.createDefault('TIER1'); // 60/60s
+      const customRateLimit = RateLimit.createCustom(60, 60); // 同じ値だがカスタム
+      const user1 = AuthenticatedUser.create(testUserId, defaultRateLimit);
+      const user2 = AuthenticatedUser.create(testUserId, customRateLimit);
 
-      expect(updatedUser.userId).toBe(testUserId);
-      expect(updatedUser.userTier).toBe(tier1);
-      expect(updatedUser.rateLimit).toBe(newRateLimit);
-      expect(updatedUser.hasCustomRateLimit).toBe(true);
-
-      // 元のインスタンスは変更されない
-      expect(user.rateLimit.limit).toBe(60);
-      expect(user.hasCustomRateLimit).toBe(false);
-    });
-  });
-
-  describe('withTier', () => {
-    it('ティアを変更した新しいインスタンスを作成する', () => {
-      const user = AuthenticatedUser.create(testUserId, tier1);
-      const updatedUser = user.withTier(tier2);
-
-      expect(updatedUser.userId).toBe(testUserId);
-      expect(updatedUser.userTier).toBe(tier2);
-      expect(updatedUser.rateLimit.limit).toBe(120); // tier2のデフォルト
-      expect(updatedUser.hasCustomRateLimit).toBe(false);
-
-      // 元のインスタンスは変更されない
-      expect(user.userTier).toBe(tier1);
-    });
-
-    it('カスタムレート制限があってもデフォルトに戻る', () => {
-      const customRateLimit = RateLimit.create(500, 60);
-      const user = AuthenticatedUser.createWithCustomRateLimit(testUserId, tier1, customRateLimit);
-      const updatedUser = user.withTier(tier2);
-
-      expect(updatedUser.rateLimit.limit).toBe(120); // tier2のデフォルト
-      expect(updatedUser.hasCustomRateLimit).toBe(false);
+      expect(user1.equals(user2)).toBe(false);
     });
   });
 });

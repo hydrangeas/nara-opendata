@@ -1,10 +1,21 @@
 /**
+ * レート制限の由来
+ */
+export enum RateLimitSource {
+  TIER1_DEFAULT = 'TIER1_DEFAULT',
+  TIER2_DEFAULT = 'TIER2_DEFAULT',
+  TIER3_DEFAULT = 'TIER3_DEFAULT',
+  CUSTOM = 'CUSTOM',
+}
+
+/**
  * レート制限を表すバリューオブジェクト
  */
 export class RateLimit {
   private constructor(
     private readonly _limit: number,
     private readonly _windowSeconds: number,
+    private readonly _source: RateLimitSource,
   ) {
     this.validate();
   }
@@ -31,6 +42,20 @@ export class RateLimit {
   }
 
   /**
+   * レート制限の由来を取得する
+   */
+  get source(): RateLimitSource {
+    return this._source;
+  }
+
+  /**
+   * カスタムレート制限かどうかを判定する
+   */
+  get isCustom(): boolean {
+    return this._source === RateLimitSource.CUSTOM;
+  }
+
+  /**
    * バリデーション
    */
   private validate(): void {
@@ -49,17 +74,42 @@ export class RateLimit {
   }
 
   /**
-   * RateLimitを作成する
+   * デフォルトのレート制限を作成する
    */
-  static create(limit: number, windowSeconds: number): RateLimit {
-    return new RateLimit(limit, windowSeconds);
+  static createDefault(tier: string): RateLimit {
+    const configs: Record<
+      string,
+      { limit: number; windowSeconds: number; source: RateLimitSource }
+    > = {
+      TIER1: { limit: 60, windowSeconds: 60, source: RateLimitSource.TIER1_DEFAULT },
+      TIER2: { limit: 120, windowSeconds: 60, source: RateLimitSource.TIER2_DEFAULT },
+      TIER3: { limit: 300, windowSeconds: 60, source: RateLimitSource.TIER3_DEFAULT },
+    };
+
+    const config = configs[tier];
+    if (!config) {
+      throw new Error(`Invalid tier level: ${tier}`);
+    }
+
+    return new RateLimit(config.limit, config.windowSeconds, config.source);
+  }
+
+  /**
+   * カスタムレート制限を作成する
+   */
+  static createCustom(limit: number, windowSeconds: number): RateLimit {
+    return new RateLimit(limit, windowSeconds, RateLimitSource.CUSTOM);
   }
 
   /**
    * 等価性を判定する
    */
   equals(other: RateLimit): boolean {
-    return this._limit === other._limit && this._windowSeconds === other._windowSeconds;
+    return (
+      this._limit === other._limit &&
+      this._windowSeconds === other._windowSeconds &&
+      this._source === other._source
+    );
   }
 
   /**

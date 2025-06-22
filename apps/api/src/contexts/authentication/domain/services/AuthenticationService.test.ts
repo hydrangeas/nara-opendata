@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { TierLevel } from '@nara-opendata/shared-kernel';
 import { AuthenticationService, type IJWTPayload } from './AuthenticationService';
+import { RateLimitSource } from '../models/RateLimit';
 
 describe('AuthenticationService', () => {
   const validUserId = '123e4567-e89b-12d3-a456-426614174000';
@@ -14,9 +14,10 @@ describe('AuthenticationService', () => {
       const user = AuthenticationService.createUserFromJWT(payload);
 
       expect(user.userId).toBe(validUserId);
-      expect(user.userTier.level).toBe(TierLevel.TIER1); // デフォルト
       expect(user.rateLimit.limit).toBe(60); // TIER1のデフォルト
-      expect(user.hasCustomRateLimit).toBe(false);
+      expect(user.rateLimit.windowSeconds).toBe(60);
+      expect(user.rateLimit.source).toBe(RateLimitSource.TIER1_DEFAULT);
+      expect(user.rateLimit.isCustom).toBe(false);
     });
 
     it('ティア情報を含むペイロードからユーザーを作成できる', () => {
@@ -30,8 +31,10 @@ describe('AuthenticationService', () => {
       const user = AuthenticationService.createUserFromJWT(payload);
 
       expect(user.userId).toBe(validUserId);
-      expect(user.userTier.level).toBe(TierLevel.TIER2);
       expect(user.rateLimit.limit).toBe(120); // TIER2のデフォルト
+      expect(user.rateLimit.windowSeconds).toBe(60);
+      expect(user.rateLimit.source).toBe(RateLimitSource.TIER2_DEFAULT);
+      expect(user.rateLimit.isCustom).toBe(false);
     });
 
     it('カスタムレート制限を含むペイロードからユーザーを作成できる', () => {
@@ -49,10 +52,10 @@ describe('AuthenticationService', () => {
       const user = AuthenticationService.createUserFromJWT(payload);
 
       expect(user.userId).toBe(validUserId);
-      expect(user.userTier.level).toBe(TierLevel.TIER1);
       expect(user.rateLimit.limit).toBe(500);
       expect(user.rateLimit.windowSeconds).toBe(60);
-      expect(user.hasCustomRateLimit).toBe(true);
+      expect(user.rateLimit.source).toBe(RateLimitSource.CUSTOM);
+      expect(user.rateLimit.isCustom).toBe(true);
     });
 
     it('無効なユーザーIDの場合エラーになる', () => {
