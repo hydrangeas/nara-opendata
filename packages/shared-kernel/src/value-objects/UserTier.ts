@@ -40,7 +40,10 @@ export function getUserTierLevel(tier: UserTier): TierLevel {
 /**
  * UserTierのデフォルトレート制限を取得する
  */
-export function getUserTierDefaultRateLimit(tier: UserTier): { limit: number; windowSeconds: number } {
+export function getUserTierDefaultRateLimit(tier: UserTier): {
+  limit: number;
+  windowSeconds: number;
+} {
   const rateLimits = {
     [TierLevel.TIER1]: { limit: 60, windowSeconds: 60 },
     [TierLevel.TIER2]: { limit: 120, windowSeconds: 60 },
