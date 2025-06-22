@@ -56,7 +56,7 @@ describe('UserId', () => {
     it('大文字小文字が異なっても同じUUIDなら等しい', () => {
       const upperCase = '123E4567-E89B-12D3-A456-426614174000';
       const lowerCase = '123e4567-e89b-12d3-a456-426614174000';
-      
+
       const userId1 = createUserId(upperCase);
       const userId2 = createUserId(lowerCase);
 
