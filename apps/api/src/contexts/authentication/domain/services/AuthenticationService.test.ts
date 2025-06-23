@@ -5,6 +5,10 @@ import {
   type IRateLimitState,
 } from './AuthenticationService';
 import {
+  getUserId,
+  getRateLimit as getAuthenticatedUserRateLimit,
+} from '../models/AuthenticatedUser';
+import {
   RateLimitSource,
   getRateLimitValue,
   getRateLimitWindowSeconds,
@@ -36,10 +40,11 @@ describe('AuthenticationService', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.user.userId).toBe(validUserId);
-        expect(getRateLimitValue(result.user.rateLimit)).toBe(60); // TIER1のデフォルト
-        expect(getRateLimitWindowSeconds(result.user.rateLimit)).toBe(60);
-        expect(getRateLimitSource(result.user.rateLimit)).toBe(RateLimitSource.TIER1_DEFAULT);
+        expect(getUserId(result.user)).toBe(validUserId);
+        const userRateLimit = getAuthenticatedUserRateLimit(result.user);
+        expect(getRateLimitValue(userRateLimit)).toBe(60); // TIER1のデフォルト
+        expect(getRateLimitWindowSeconds(userRateLimit)).toBe(60);
+        expect(getRateLimitSource(userRateLimit)).toBe(RateLimitSource.TIER1_DEFAULT);
       }
     });
 
@@ -59,10 +64,11 @@ describe('AuthenticationService', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.user.userId).toBe(validUserId);
-        expect(getRateLimitValue(result.user.rateLimit)).toBe(120); // TIER2のデフォルト
-        expect(getRateLimitWindowSeconds(result.user.rateLimit)).toBe(60);
-        expect(getRateLimitSource(result.user.rateLimit)).toBe(RateLimitSource.TIER2_DEFAULT);
+        expect(getUserId(result.user)).toBe(validUserId);
+        const userRateLimit = getAuthenticatedUserRateLimit(result.user);
+        expect(getRateLimitValue(userRateLimit)).toBe(120); // TIER2のデフォルト
+        expect(getRateLimitWindowSeconds(userRateLimit)).toBe(60);
+        expect(getRateLimitSource(userRateLimit)).toBe(RateLimitSource.TIER2_DEFAULT);
       }
     });
 
@@ -86,10 +92,11 @@ describe('AuthenticationService', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.user.userId).toBe(validUserId);
-        expect(getRateLimitValue(result.user.rateLimit)).toBe(500);
-        expect(getRateLimitWindowSeconds(result.user.rateLimit)).toBe(60);
-        expect(getRateLimitSource(result.user.rateLimit)).toBe(RateLimitSource.CUSTOM);
+        expect(getUserId(result.user)).toBe(validUserId);
+        const userRateLimit = getAuthenticatedUserRateLimit(result.user);
+        expect(getRateLimitValue(userRateLimit)).toBe(500);
+        expect(getRateLimitWindowSeconds(userRateLimit)).toBe(60);
+        expect(getRateLimitSource(userRateLimit)).toBe(RateLimitSource.CUSTOM);
       }
     });
 
@@ -129,10 +136,11 @@ describe('AuthenticationService', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.user.userId).toBe(validUserId);
-        expect(getRateLimitValue(result.user.rateLimit)).toBe(60); // TIER1のデフォルト
-        expect(getRateLimitWindowSeconds(result.user.rateLimit)).toBe(60);
-        expect(getRateLimitSource(result.user.rateLimit)).toBe(RateLimitSource.TIER1_DEFAULT);
+        expect(getUserId(result.user)).toBe(validUserId);
+        const userRateLimit = getAuthenticatedUserRateLimit(result.user);
+        expect(getRateLimitValue(userRateLimit)).toBe(60); // TIER1のデフォルト
+        expect(getRateLimitWindowSeconds(userRateLimit)).toBe(60);
+        expect(getRateLimitSource(userRateLimit)).toBe(RateLimitSource.TIER1_DEFAULT);
       }
 
       // 警告が出力されることを確認
@@ -158,8 +166,9 @@ describe('AuthenticationService', () => {
       const resultLower = AuthenticationService.createAuthenticatedUserFromJWT(payloadLower);
       expect(resultLower.success).toBe(true);
       if (resultLower.success) {
-        expect(getRateLimitValue(resultLower.user.rateLimit)).toBe(120);
-        expect(getRateLimitSource(resultLower.user.rateLimit)).toBe(RateLimitSource.TIER2_DEFAULT);
+        const userRateLimit = getAuthenticatedUserRateLimit(resultLower.user);
+        expect(getRateLimitValue(userRateLimit)).toBe(120);
+        expect(getRateLimitSource(userRateLimit)).toBe(RateLimitSource.TIER2_DEFAULT);
       }
 
       // 混在ケースのティア
@@ -173,8 +182,9 @@ describe('AuthenticationService', () => {
       const resultMixed = AuthenticationService.createAuthenticatedUserFromJWT(payloadMixed);
       expect(resultMixed.success).toBe(true);
       if (resultMixed.success) {
-        expect(getRateLimitValue(resultMixed.user.rateLimit)).toBe(300);
-        expect(getRateLimitSource(resultMixed.user.rateLimit)).toBe(RateLimitSource.TIER3_DEFAULT);
+        const userRateLimit = getAuthenticatedUserRateLimit(resultMixed.user);
+        expect(getRateLimitValue(userRateLimit)).toBe(300);
+        expect(getRateLimitSource(userRateLimit)).toBe(RateLimitSource.TIER3_DEFAULT);
       }
 
       // 前後の空白も除去される
@@ -188,8 +198,9 @@ describe('AuthenticationService', () => {
       const resultSpaces = AuthenticationService.createAuthenticatedUserFromJWT(payloadSpaces);
       expect(resultSpaces.success).toBe(true);
       if (resultSpaces.success) {
-        expect(getRateLimitValue(resultSpaces.user.rateLimit)).toBe(60);
-        expect(getRateLimitSource(resultSpaces.user.rateLimit)).toBe(RateLimitSource.TIER1_DEFAULT);
+        const userRateLimit = getAuthenticatedUserRateLimit(resultSpaces.user);
+        expect(getRateLimitValue(userRateLimit)).toBe(60);
+        expect(getRateLimitSource(userRateLimit)).toBe(RateLimitSource.TIER1_DEFAULT);
       }
     });
     it('期限切れトークンの場合エラーを返す', () => {

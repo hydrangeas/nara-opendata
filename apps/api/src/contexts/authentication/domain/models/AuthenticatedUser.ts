@@ -1,41 +1,48 @@
 import type { UserId } from '@nara-opendata/shared-kernel';
+import { equalsUserId } from '@nara-opendata/shared-kernel';
 import type { RateLimit } from './RateLimit';
 import { equalsRateLimit } from './RateLimit';
 
 /**
- * 認証されたユーザーを表すバリューオブジェクト
+ * 認証されたユーザーの属性
  */
-export class AuthenticatedUser {
-  private constructor(
-    private readonly _userId: UserId,
-    private readonly _rateLimit: RateLimit,
-  ) {}
+export interface IAuthenticatedUserAttributes {
+  userId: UserId;
+  rateLimit: RateLimit;
+}
 
-  /**
-   * ユーザーIDを取得する
-   */
-  get userId(): UserId {
-    return this._userId;
-  }
+/**
+ * 認証されたユーザーを表すバリューオブジェクト
+ * ブランド型を使用してIAuthenticatedUserAttributes型と区別する
+ */
+export type AuthenticatedUser = IAuthenticatedUserAttributes & { readonly brand: unique symbol };
 
-  /**
-   * レート制限を取得する
-   */
-  get rateLimit(): RateLimit {
-    return this._rateLimit;
-  }
+/**
+ * AuthenticatedUserを作成する
+ */
+export function createAuthenticatedUser(userId: UserId, rateLimit: RateLimit): AuthenticatedUser {
+  // UserIdとRateLimitは既にバリデーション済みのbrand型なので、
+  // ここでは追加のバリデーションは不要
+  return { userId, rateLimit } as AuthenticatedUser;
+}
 
-  /**
-   * AuthenticatedUserを作成する
-   */
-  static create(userId: UserId, rateLimit: RateLimit): AuthenticatedUser {
-    return new AuthenticatedUser(userId, rateLimit);
-  }
+/**
+ * AuthenticatedUserからユーザーIDを取得する
+ */
+export function getUserId(user: AuthenticatedUser): UserId {
+  return user.userId;
+}
 
-  /**
-   * 等価性を判定する
-   */
-  equals(other: AuthenticatedUser): boolean {
-    return this._userId === other._userId && equalsRateLimit(this._rateLimit, other._rateLimit);
-  }
+/**
+ * AuthenticatedUserからレート制限を取得する
+ */
+export function getRateLimit(user: AuthenticatedUser): RateLimit {
+  return user.rateLimit;
+}
+
+/**
+ * AuthenticatedUserの等価性を判定する
+ */
+export function equalsAuthenticatedUser(a: AuthenticatedUser, b: AuthenticatedUser): boolean {
+  return equalsUserId(a.userId, b.userId) && equalsRateLimit(a.rateLimit, b.rateLimit);
 }

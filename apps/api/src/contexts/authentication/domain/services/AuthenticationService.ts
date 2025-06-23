@@ -1,5 +1,9 @@
 import { createUserId, TierLevel } from '@nara-opendata/shared-kernel';
-import { AuthenticatedUser } from '../models/AuthenticatedUser';
+import type { AuthenticatedUser } from '../models/AuthenticatedUser';
+import {
+  createAuthenticatedUser,
+  getRateLimit as getAuthenticatedUserRateLimit,
+} from '../models/AuthenticatedUser';
 import {
   createDefaultRateLimit,
   createCustomRateLimit,
@@ -203,7 +207,7 @@ export const AuthenticationService = {
         );
         return {
           success: true,
-          user: AuthenticatedUser.create(userId, rateLimit),
+          user: createAuthenticatedUser(userId, rateLimit),
         };
       }
 
@@ -219,7 +223,7 @@ export const AuthenticationService = {
       const rateLimit = createDefaultRateLimit(tierResult.level);
       return {
         success: true,
-        user: AuthenticatedUser.create(userId, rateLimit),
+        user: createAuthenticatedUser(userId, rateLimit),
       };
     } catch (error) {
       // ユーザーID作成エラーなど
@@ -294,8 +298,9 @@ export const AuthenticationService = {
    */
   checkRateLimitWithState(user: AuthenticatedUser, state: IRateLimitState): IRateLimitCheckResult {
     const now = new Date();
-    const windowSeconds = getRateLimitWindowSeconds(user.rateLimit);
-    const limit = getRateLimitValue(user.rateLimit);
+    const userRateLimit = getAuthenticatedUserRateLimit(user);
+    const windowSeconds = getRateLimitWindowSeconds(userRateLimit);
+    const limit = getRateLimitValue(userRateLimit);
     const windowEndTime = new Date(state.windowStartTime.getTime() + windowSeconds * 1000);
 
     // ウィンドウが過ぎている場合は新しいウィンドウとして扱う
