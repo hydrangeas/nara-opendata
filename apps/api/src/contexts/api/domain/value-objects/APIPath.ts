@@ -17,6 +17,11 @@ export function createAPIPath(path: string): APIPath {
     throw new Error('API path cannot be empty');
   }
 
+  // パストラバーサル攻撃対策
+  if (path.includes('..') || path.includes('./') || path.includes('/.')) {
+    throw new Error('Path traversal detected in API path');
+  }
+
   // パスの検証（基本的な文字のみ許可）
   const validPathPattern = /^\/[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%{}]*$/;
   if (!validPathPattern.test(path)) {
@@ -48,7 +53,7 @@ export function equalsAPIPath(a: APIPath, b: APIPath): boolean {
  */
 export function matchesPattern(apiPath: APIPath, pattern: string): boolean {
   // パターンを正規表現に変換
-  // * を .* に、? を . に変換し、他の特殊文字をエスケープ
+  // * を .* に変換し、他の特殊文字をエスケープ
   const regexPattern = pattern
     .split('*')
     .map((part) => part.replace(/[.+?^${}()|[\]\\]/g, '\\$&'))

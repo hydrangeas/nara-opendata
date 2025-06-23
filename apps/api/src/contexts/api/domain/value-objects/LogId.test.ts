@@ -28,13 +28,8 @@ describe('LogId', () => {
       }
     });
 
-    it('空文字列の場合は新しいUUIDを生成する', () => {
-      const logId = createLogId('');
-      const value = getLogIdValue(logId);
-
-      // UUID v4形式であることを確認
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
-      expect(uuidRegex.test(value)).toBe(true);
+    it('空文字列の場合はエラーを投げる', () => {
+      expect(() => createLogId('')).toThrow('LogId cannot be empty');
     });
 
     it('引数なしで新しいUUIDを生成する', () => {

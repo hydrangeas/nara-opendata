@@ -41,6 +41,20 @@ describe('APIPath', () => {
         expect(() => createAPIPath(path)).toThrow('Invalid API path format');
       }
     });
+
+    it('パストラバーサル攻撃を検出して拒否する', () => {
+      const pathTraversalPaths = [
+        '/api/../secret',
+        '/api/./hidden',
+        '/api/.hidden',
+        '/../etc/passwd',
+        '/api/users/../../../etc',
+      ];
+
+      for (const path of pathTraversalPaths) {
+        expect(() => createAPIPath(path)).toThrow('Path traversal detected in API path');
+      }
+    });
   });
 
   describe('equalsAPIPath', () => {
