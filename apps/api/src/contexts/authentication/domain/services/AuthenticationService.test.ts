@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { AuthenticationService, type IJWTPayload } from './AuthenticationService';
-import { RateLimitSource } from '../models/RateLimit';
+import {
+  RateLimitSource,
+  getRateLimitValue,
+  getRateLimitWindowSeconds,
+  getRateLimitSource,
+  isCustomRateLimit,
+} from '../models/RateLimit';
 
 describe('AuthenticationService', () => {
   const validUserId = '123e4567-e89b-12d3-a456-426614174000';
@@ -14,10 +20,10 @@ describe('AuthenticationService', () => {
       const user = AuthenticationService.createUserFromJWT(payload);
 
       expect(user.userId).toBe(validUserId);
-      expect(user.rateLimit.limit).toBe(60); // TIER1のデフォルト
-      expect(user.rateLimit.windowSeconds).toBe(60);
-      expect(user.rateLimit.source).toBe(RateLimitSource.TIER1_DEFAULT);
-      expect(user.rateLimit.isCustom).toBe(false);
+      expect(getRateLimitValue(user.rateLimit)).toBe(60); // TIER1のデフォルト
+      expect(getRateLimitWindowSeconds(user.rateLimit)).toBe(60);
+      expect(getRateLimitSource(user.rateLimit)).toBe(RateLimitSource.TIER1_DEFAULT);
+      expect(isCustomRateLimit(user.rateLimit)).toBe(false);
     });
 
     it('ティア情報を含むペイロードからユーザーを作成できる', () => {
@@ -31,10 +37,10 @@ describe('AuthenticationService', () => {
       const user = AuthenticationService.createUserFromJWT(payload);
 
       expect(user.userId).toBe(validUserId);
-      expect(user.rateLimit.limit).toBe(120); // TIER2のデフォルト
-      expect(user.rateLimit.windowSeconds).toBe(60);
-      expect(user.rateLimit.source).toBe(RateLimitSource.TIER2_DEFAULT);
-      expect(user.rateLimit.isCustom).toBe(false);
+      expect(getRateLimitValue(user.rateLimit)).toBe(120); // TIER2のデフォルト
+      expect(getRateLimitWindowSeconds(user.rateLimit)).toBe(60);
+      expect(getRateLimitSource(user.rateLimit)).toBe(RateLimitSource.TIER2_DEFAULT);
+      expect(isCustomRateLimit(user.rateLimit)).toBe(false);
     });
 
     it('カスタムレート制限を含むペイロードからユーザーを作成できる', () => {
@@ -52,10 +58,10 @@ describe('AuthenticationService', () => {
       const user = AuthenticationService.createUserFromJWT(payload);
 
       expect(user.userId).toBe(validUserId);
-      expect(user.rateLimit.limit).toBe(500);
-      expect(user.rateLimit.windowSeconds).toBe(60);
-      expect(user.rateLimit.source).toBe(RateLimitSource.CUSTOM);
-      expect(user.rateLimit.isCustom).toBe(true);
+      expect(getRateLimitValue(user.rateLimit)).toBe(500);
+      expect(getRateLimitWindowSeconds(user.rateLimit)).toBe(60);
+      expect(getRateLimitSource(user.rateLimit)).toBe(RateLimitSource.CUSTOM);
+      expect(isCustomRateLimit(user.rateLimit)).toBe(true);
     });
 
     it('無効なユーザーIDの場合エラーになる', () => {

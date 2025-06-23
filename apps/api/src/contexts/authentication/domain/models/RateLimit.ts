@@ -9,113 +9,115 @@ export enum RateLimitSource {
 }
 
 /**
- * レート制限を表すバリューオブジェクト
+ * レート制限の設定値
  */
-export class RateLimit {
-  private constructor(
-    private readonly _limit: number,
-    private readonly _windowSeconds: number,
-    private readonly _source: RateLimitSource,
-  ) {
-    this.validate();
+export interface IRateLimitConfig {
+  limit: number;
+  windowSeconds: number;
+  source: RateLimitSource;
+}
+
+/**
+ * レート制限を表すバリューオブジェクト
+ * ブランド型を使用してIRateLimitConfig型と区別する
+ */
+export type RateLimit = IRateLimitConfig & { readonly brand: unique symbol };
+
+/**
+ * レート制限を作成する
+ */
+function createRateLimit(config: IRateLimitConfig): RateLimit {
+  // バリデーション
+  if (config.limit <= 0) {
+    throw new Error('Rate limit must be positive');
+  }
+  if (config.windowSeconds <= 0) {
+    throw new Error('Window seconds must be positive');
+  }
+  if (!Number.isInteger(config.limit)) {
+    throw new Error('Rate limit must be an integer');
+  }
+  if (!Number.isInteger(config.windowSeconds)) {
+    throw new Error('Window seconds must be an integer');
   }
 
-  /**
-   * 制限回数を取得する
-   */
-  get limit(): number {
-    return this._limit;
+  return config as RateLimit;
+}
+
+/**
+ * デフォルトのレート制限を作成する
+ */
+export function createDefaultRateLimit(tier: string): RateLimit {
+  const configs: Record<string, IRateLimitConfig> = {
+    TIER1: { limit: 60, windowSeconds: 60, source: RateLimitSource.TIER1_DEFAULT },
+    TIER2: { limit: 120, windowSeconds: 60, source: RateLimitSource.TIER2_DEFAULT },
+    TIER3: { limit: 300, windowSeconds: 60, source: RateLimitSource.TIER3_DEFAULT },
+  };
+
+  const config = configs[tier];
+  if (!config) {
+    throw new Error(`Invalid tier level: ${tier}`);
   }
 
-  /**
-   * ウィンドウ秒数を取得する
-   */
-  get windowSeconds(): number {
-    return this._windowSeconds;
-  }
+  return createRateLimit(config);
+}
 
-  /**
-   * 1秒あたりのリクエスト数を計算する
-   */
-  get requestsPerSecond(): number {
-    return this._limit / this._windowSeconds;
-  }
+/**
+ * カスタムレート制限を作成する
+ */
+export function createCustomRateLimit(limit: number, windowSeconds: number): RateLimit {
+  return createRateLimit({
+    limit,
+    windowSeconds,
+    source: RateLimitSource.CUSTOM,
+  });
+}
 
-  /**
-   * レート制限の由来を取得する
-   */
-  get source(): RateLimitSource {
-    return this._source;
-  }
+/**
+ * レート制限の制限回数を取得する
+ */
+export function getRateLimitValue(rateLimit: RateLimit): number {
+  return rateLimit.limit;
+}
 
-  /**
-   * カスタムレート制限かどうかを判定する
-   */
-  get isCustom(): boolean {
-    return this._source === RateLimitSource.CUSTOM;
-  }
+/**
+ * レート制限のウィンドウ秒数を取得する
+ */
+export function getRateLimitWindowSeconds(rateLimit: RateLimit): number {
+  return rateLimit.windowSeconds;
+}
 
-  /**
-   * バリデーション
-   */
-  private validate(): void {
-    if (this._limit <= 0) {
-      throw new Error('Rate limit must be positive');
-    }
-    if (this._windowSeconds <= 0) {
-      throw new Error('Window seconds must be positive');
-    }
-    if (!Number.isInteger(this._limit)) {
-      throw new Error('Rate limit must be an integer');
-    }
-    if (!Number.isInteger(this._windowSeconds)) {
-      throw new Error('Window seconds must be an integer');
-    }
-  }
+/**
+ * レート制限の由来を取得する
+ */
+export function getRateLimitSource(rateLimit: RateLimit): RateLimitSource {
+  return rateLimit.source;
+}
 
-  /**
-   * デフォルトのレート制限を作成する
-   */
-  static createDefault(tier: string): RateLimit {
-    const configs: Record<
-      string,
-      { limit: number; windowSeconds: number; source: RateLimitSource }
-    > = {
-      TIER1: { limit: 60, windowSeconds: 60, source: RateLimitSource.TIER1_DEFAULT },
-      TIER2: { limit: 120, windowSeconds: 60, source: RateLimitSource.TIER2_DEFAULT },
-      TIER3: { limit: 300, windowSeconds: 60, source: RateLimitSource.TIER3_DEFAULT },
-    };
+/**
+ * 1秒あたりのリクエスト数を計算する
+ */
+export function getRateLimitRequestsPerSecond(rateLimit: RateLimit): number {
+  return rateLimit.limit / rateLimit.windowSeconds;
+}
 
-    const config = configs[tier];
-    if (!config) {
-      throw new Error(`Invalid tier level: ${tier}`);
-    }
+/**
+ * カスタムレート制限かどうかを判定する
+ */
+export function isCustomRateLimit(rateLimit: RateLimit): boolean {
+  return rateLimit.source === RateLimitSource.CUSTOM;
+}
 
-    return new RateLimit(config.limit, config.windowSeconds, config.source);
-  }
+/**
+ * レート制限の等価性を判定する
+ */
+export function equalsRateLimit(a: RateLimit, b: RateLimit): boolean {
+  return a.limit === b.limit && a.windowSeconds === b.windowSeconds && a.source === b.source;
+}
 
-  /**
-   * カスタムレート制限を作成する
-   */
-  static createCustom(limit: number, windowSeconds: number): RateLimit {
-    return new RateLimit(limit, windowSeconds, RateLimitSource.CUSTOM);
-  }
-
-  /**
-   * 等価性を判定する
-   */
-  equals(other: RateLimit): boolean {
-    return (
-      this._limit === other._limit &&
-      this._windowSeconds === other._windowSeconds &&
-      this._source === other._source
-    );
-  }
-
-  /**
-   * 文字列表現を返す
-   */
-  toString(): string {
-    return `${this._limit} requests per ${this._windowSeconds} seconds`;
-  }
+/**
+ * レート制限の文字列表現を返す
+ */
+export function rateLimitToString(rateLimit: RateLimit): string {
+  return `${rateLimit.limit} requests per ${rateLimit.windowSeconds} seconds`;
 }

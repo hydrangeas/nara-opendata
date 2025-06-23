@@ -1,6 +1,11 @@
 import { createUserId } from '@nara-opendata/shared-kernel';
 import { AuthenticatedUser } from '../models/AuthenticatedUser';
-import { RateLimit } from '../models/RateLimit';
+import {
+  createDefaultRateLimit,
+  createCustomRateLimit,
+  getRateLimitWindowSeconds,
+  getRateLimitValue,
+} from '../models/RateLimit';
 
 /**
  * JWTトークンのペイロード型
@@ -33,7 +38,7 @@ export const AuthenticationService = {
     // カスタムレート制限の確認
     const customRateLimitData = payload.app_metadata?.custom_rate_limit;
     if (customRateLimitData) {
-      const rateLimit = RateLimit.createCustom(
+      const rateLimit = createCustomRateLimit(
         customRateLimitData.limit,
         customRateLimitData.window_seconds,
       );
@@ -42,7 +47,7 @@ export const AuthenticationService = {
 
     // デフォルトレート制限を使用
     const tier = payload.app_metadata?.tier || 'TIER1';
-    const rateLimit = RateLimit.createDefault(tier);
+    const rateLimit = createDefaultRateLimit(tier);
     return AuthenticatedUser.create(userId, rateLimit);
   },
 
@@ -81,18 +86,20 @@ export const AuthenticationService = {
     windowStartTime: Date,
   ): { allowed: boolean; resetTime: Date } {
     const now = new Date();
-    const windowEndTime = new Date(windowStartTime.getTime() + user.rateLimit.windowSeconds * 1000);
+    const windowSeconds = getRateLimitWindowSeconds(user.rateLimit);
+    const limit = getRateLimitValue(user.rateLimit);
+    const windowEndTime = new Date(windowStartTime.getTime() + windowSeconds * 1000);
 
     // ウィンドウが過ぎている場合は新しいウィンドウ
     if (now >= windowEndTime) {
       return {
         allowed: true,
-        resetTime: new Date(now.getTime() + user.rateLimit.windowSeconds * 1000),
+        resetTime: new Date(now.getTime() + windowSeconds * 1000),
       };
     }
 
     // 現在のウィンドウ内でのチェック
-    const allowed = currentRequestCount < user.rateLimit.limit;
+    const allowed = currentRequestCount < limit;
     return {
       allowed,
       resetTime: windowEndTime,

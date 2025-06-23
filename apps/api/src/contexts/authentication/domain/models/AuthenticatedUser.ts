@@ -1,5 +1,6 @@
 import type { UserId } from '@nara-opendata/shared-kernel';
 import type { RateLimit } from './RateLimit';
+import { equalsRateLimit } from './RateLimit';
 
 /**
  * 認証されたユーザーを表すバリューオブジェクト
@@ -35,6 +36,6 @@ export class AuthenticatedUser {
    * 等価性を判定する
    */
   equals(other: AuthenticatedUser): boolean {
-    return this._userId === other._userId && this._rateLimit.equals(other._rateLimit);
+    return this._userId === other._userId && equalsRateLimit(this._rateLimit, other._rateLimit);
   }
 }
