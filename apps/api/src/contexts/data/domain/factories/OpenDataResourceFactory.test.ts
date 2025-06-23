@@ -86,30 +86,4 @@ describe('OpenDataResourceFactory', () => {
       expect(getContentTypeValue(resource.contentType)).toBe('application/xml');
     });
   });
-
-  describe('createBatch', () => {
-    it('複数のパスから一括でリソースを作成する', () => {
-      const paths = ['data/report1.json', 'data/report2.xml', 'data/report3.csv'];
-
-      const resources = OpenDataResourceFactory.createBatch(paths);
-
-      expect(resources).toHaveLength(3);
-      expect(getFilePathValue(resources[0]!.path)).toBe('data/report1.json');
-      expect(getContentTypeValue(resources[0]!.contentType)).toBe('application/json');
-      expect(getFilePathValue(resources[1]!.path)).toBe('data/report2.xml');
-      expect(getContentTypeValue(resources[1]!.contentType)).toBe('application/xml');
-      expect(getFilePathValue(resources[2]!.path)).toBe('data/report3.csv');
-      expect(getContentTypeValue(resources[2]!.contentType)).toBe('text/csv');
-    });
-
-    it('無効なパスはスキップされる', () => {
-      const paths = ['data/valid.json', '../invalid/path', 'data/another.xml'];
-
-      const resources = OpenDataResourceFactory.createBatch(paths);
-
-      expect(resources).toHaveLength(2);
-      expect(getFilePathValue(resources[0]!.path)).toBe('data/valid.json');
-      expect(getFilePathValue(resources[1]!.path)).toBe('data/another.xml');
-    });
-  });
 });

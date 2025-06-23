@@ -75,29 +75,4 @@ export class OpenDataResourceFactory {
       ...(fileSize && { fileSize }),
     });
   }
-
-  /**
-   * 複数のパスから一括でリソースを作成する
-   * 無効なパスはスキップされる
-   */
-  static createBatch(paths: string[]): OpenDataResource[] {
-    const resources: OpenDataResource[] = [];
-
-    for (const path of paths) {
-      try {
-        const resource = this.createFromPath(path);
-        resources.push(resource);
-      } catch (error) {
-        // 無効なパスはスキップ
-        // 開発環境でのみ警告を出力（本番環境では静かにスキップ）
-        if (process.env['NODE_ENV'] === 'development') {
-          console.warn(`[OpenDataResourceFactory] Skipped invalid path: ${path}`, error);
-        }
-        // TODO: 将来的には適切なロガー（pino等）を使用して、
-        // 本番環境でも適切なログレベルで記録する
-      }
-    }
-
-    return resources;
-  }
 }
