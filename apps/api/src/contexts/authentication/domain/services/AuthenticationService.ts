@@ -115,6 +115,19 @@ function parseTierLevel(tierString: string | undefined): TierLevel {
 }
 
 /**
+ * エラー理由に対応するメッセージを取得
+ */
+function getErrorMessage(reason: AuthenticationErrorReason): string {
+  const messages: Record<AuthenticationErrorReason, string> = {
+    expired: 'Token has expired',
+    not_yet_valid: 'Token is not yet valid',
+    missing_exp: 'Token is missing expiration time',
+    invalid_user_id: 'Invalid user ID in token',
+  };
+  return messages[reason];
+}
+
+/**
  * 認証に関するドメインサービス
  */
 export const AuthenticationService = {
@@ -133,7 +146,7 @@ export const AuthenticationService = {
         error: {
           type: 'INVALID_TOKEN',
           reason: timingValidation.reason,
-          message: this.getErrorMessage(timingValidation.reason),
+          message: getErrorMessage(timingValidation.reason),
           details: timingValidation.details || {},
         },
       };
@@ -177,19 +190,6 @@ export const AuthenticationService = {
         },
       };
     }
-  },
-
-  /**
-   * エラー理由に対応するメッセージを取得
-   */
-  getErrorMessage(reason: AuthenticationErrorReason): string {
-    const messages: Record<typeof reason, string> = {
-      expired: 'Token has expired',
-      not_yet_valid: 'Token is not yet valid',
-      missing_exp: 'Token is missing expiration time',
-      invalid_user_id: 'Invalid user ID in token',
-    };
-    return messages[reason];
   },
 
   /**
