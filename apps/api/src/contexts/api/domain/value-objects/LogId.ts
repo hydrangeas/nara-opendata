@@ -28,8 +28,8 @@ export function createLogId(value?: string): LogId {
     return { value: value.toLowerCase() } as LogId;
   }
 
-  // 新規生成
-  return { value: randomUUID() } as LogId;
+  // 新規生成（小文字に正規化）
+  return { value: randomUUID().toLowerCase() } as LogId;
 }
 
 /**
