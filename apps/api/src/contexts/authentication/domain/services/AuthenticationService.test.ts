@@ -272,7 +272,9 @@ describe('AuthenticationService', () => {
 
       const result = AuthenticationService.validateTokenTiming(payload);
       expect(result.isValid).toBe(true);
-      expect(result.reason).toBeUndefined();
+      if (!result.isValid) {
+        expect(result.reason).toBeUndefined();
+      }
     });
 
     it('期限切れのトークンを検出する', () => {
@@ -286,9 +288,11 @@ describe('AuthenticationService', () => {
 
       const result = AuthenticationService.validateTokenTiming(payload);
       expect(result.isValid).toBe(false);
-      expect(result.reason).toBe('expired');
-      expect(result.details?.exp).toBe(payload.exp);
-      expect(result.details?.now).toBe(Math.floor(now.getTime() / 1000));
+      if (!result.isValid) {
+        expect(result.reason).toBe('expired');
+        expect(result.details?.exp).toBe(payload.exp);
+        expect(result.details?.now).toBe(Math.floor(now.getTime() / 1000));
+      }
     });
 
     it('未来のトークンを検出する', () => {
@@ -303,9 +307,11 @@ describe('AuthenticationService', () => {
 
       const result = AuthenticationService.validateTokenTiming(payload);
       expect(result.isValid).toBe(false);
-      expect(result.reason).toBe('not_yet_valid');
-      expect(result.details?.iat).toBe(payload.iat);
-      expect(result.details?.now).toBe(Math.floor(now.getTime() / 1000));
+      if (!result.isValid) {
+        expect(result.reason).toBe('not_yet_valid');
+        expect(result.details?.iat).toBe(payload.iat);
+        expect(result.details?.now).toBe(Math.floor(now.getTime() / 1000));
+      }
     });
 
     it('有効期限がないトークンを無効と判定する', () => {
@@ -319,8 +325,10 @@ describe('AuthenticationService', () => {
 
       const result = AuthenticationService.validateTokenTiming(payload);
       expect(result.isValid).toBe(false);
-      expect(result.reason).toBe('missing_exp');
-      expect(result.details?.now).toBe(Math.floor(now.getTime() / 1000));
+      if (!result.isValid) {
+        expect(result.reason).toBe('missing_exp');
+        expect(result.details?.now).toBe(Math.floor(now.getTime() / 1000));
+      }
     });
 
     it('発行時刻がなくても有効期限があれば有効と判定する', () => {

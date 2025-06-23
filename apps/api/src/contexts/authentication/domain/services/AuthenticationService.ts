@@ -25,11 +25,26 @@ export interface IJWTPayload {
 }
 
 /**
+ * トークン検証エラーの理由
+ */
+export type TokenErrorReason = 'expired' | 'not_yet_valid' | 'missing_exp';
+
+/**
+ * ペイロード検証エラーの理由
+ */
+export type PayloadErrorReason = 'invalid_user_id';
+
+/**
+ * 認証エラーの理由（すべて）
+ */
+export type AuthenticationErrorReason = TokenErrorReason | PayloadErrorReason;
+
+/**
  * 認証エラー情報
  */
 export interface IAuthenticationError {
   type: 'INVALID_TOKEN' | 'INVALID_PAYLOAD';
-  reason: 'expired' | 'not_yet_valid' | 'missing_exp' | 'invalid_user_id';
+  reason: AuthenticationErrorReason;
   message: string;
   details?: {
     exp?: number | undefined; // トークンの有効期限（UNIX時刻）
@@ -117,10 +132,8 @@ export const AuthenticationService = {
         success: false,
         error: {
           type: 'INVALID_TOKEN',
-          reason: timingValidation.reason as 'expired' | 'not_yet_valid' | 'missing_exp',
-          message: this.getErrorMessage(
-            timingValidation.reason as 'expired' | 'not_yet_valid' | 'missing_exp',
-          ),
+          reason: timingValidation.reason,
+          message: this.getErrorMessage(timingValidation.reason),
           details: timingValidation.details || {},
         },
       };
@@ -169,7 +182,7 @@ export const AuthenticationService = {
   /**
    * エラー理由に対応するメッセージを取得
    */
-  getErrorMessage(reason: 'expired' | 'not_yet_valid' | 'missing_exp' | 'invalid_user_id'): string {
+  getErrorMessage(reason: AuthenticationErrorReason): string {
     const messages: Record<typeof reason, string> = {
       expired: 'Token has expired',
       not_yet_valid: 'Token is not yet valid',
@@ -183,15 +196,17 @@ export const AuthenticationService = {
    * トークンの時刻関連の有効性を包括的に検証する
    * @returns 検証結果と理由
    */
-  validateTokenTiming(payload: IJWTPayload): {
-    isValid: boolean;
-    reason?: 'expired' | 'not_yet_valid' | 'missing_exp';
-    details?: {
-      exp?: number;
-      iat?: number;
-      now: number;
-    };
-  } {
+  validateTokenTiming(payload: IJWTPayload):
+    | { isValid: true }
+    | {
+        isValid: false;
+        reason: TokenErrorReason;
+        details: {
+          exp?: number;
+          iat?: number;
+          now: number;
+        };
+      } {
     const now = Math.floor(Date.now() / 1000);
 
     // 有効期限の検証
