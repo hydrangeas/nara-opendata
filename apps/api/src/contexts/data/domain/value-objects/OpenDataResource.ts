@@ -86,6 +86,10 @@ export function isResourceAccessible(
     'application/pdf',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // Excel
     'application/vnd.ms-excel', // 旧Excel
+    'application/zip', // ZIP圧縮
+    'application/gzip', // GZIP圧縮
+    'application/x-bzip2', // BZIP2圧縮
+    'application/x-xz', // XZ圧縮
   ];
 
   // コンテンツタイプのチェック（パラメータを除いたメインタイプで判定）

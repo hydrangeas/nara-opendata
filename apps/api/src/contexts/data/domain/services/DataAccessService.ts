@@ -81,6 +81,10 @@ export class DataAccessService {
       htm: 'text/html',
       xls: 'application/vnd.ms-excel',
       xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      zip: 'application/zip',
+      gz: 'application/gzip',
+      bz2: 'application/x-bzip2',
+      xz: 'application/x-xz',
     };
 
     const contentType =

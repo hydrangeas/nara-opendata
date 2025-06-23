@@ -111,6 +111,11 @@ describe('DataAccessService', () => {
           path: 'data/report.xlsx',
           expectedType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         },
+        { path: 'data/archive.zip', expectedType: 'application/zip' },
+        { path: 'data/archive.ZIP', expectedType: 'application/zip' }, // 大文字
+        { path: 'data/compressed.gz', expectedType: 'application/gzip' },
+        { path: 'data/compressed.bz2', expectedType: 'application/x-bzip2' },
+        { path: 'data/compressed.xz', expectedType: 'application/x-xz' },
       ];
 
       for (const { path, expectedType } of testCases) {
