@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { AuthenticationService, type IJWTPayload } from './AuthenticationService';
+import {
+  AuthenticationService,
+  type IJWTPayload,
+  type IRateLimitState,
+} from './AuthenticationService';
 import {
   RateLimitSource,
   getRateLimitValue,
@@ -10,39 +14,65 @@ import {
 describe('AuthenticationService', () => {
   const validUserId = '123e4567-e89b-12d3-a456-426614174000';
 
-  describe('createUserFromJWT', () => {
-    it('最小限のペイロードからユーザーを作成できる', () => {
+  describe('createAuthenticatedUserFromJWT', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('有効なトークンから最小限のペイロードでユーザーを作成できる', () => {
+      const now = new Date('2024-01-01T12:00:00Z');
+      vi.setSystemTime(now);
+
       const payload: IJWTPayload = {
         sub: validUserId,
+        exp: Math.floor(now.getTime() / 1000) + 3600, // 1時間後に期限切れ
       };
 
-      const user = AuthenticationService.createUserFromJWT(payload);
+      const result = AuthenticationService.createAuthenticatedUserFromJWT(payload);
 
-      expect(user.userId).toBe(validUserId);
-      expect(getRateLimitValue(user.rateLimit)).toBe(60); // TIER1のデフォルト
-      expect(getRateLimitWindowSeconds(user.rateLimit)).toBe(60);
-      expect(getRateLimitSource(user.rateLimit)).toBe(RateLimitSource.TIER1_DEFAULT);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.user.userId).toBe(validUserId);
+        expect(getRateLimitValue(result.user.rateLimit)).toBe(60); // TIER1のデフォルト
+        expect(getRateLimitWindowSeconds(result.user.rateLimit)).toBe(60);
+        expect(getRateLimitSource(result.user.rateLimit)).toBe(RateLimitSource.TIER1_DEFAULT);
+      }
     });
 
     it('ティア情報を含むペイロードからユーザーを作成できる', () => {
+      const now = new Date('2024-01-01T12:00:00Z');
+      vi.setSystemTime(now);
+
       const payload: IJWTPayload = {
         sub: validUserId,
+        exp: Math.floor(now.getTime() / 1000) + 3600,
         app_metadata: {
           tier: 'TIER2',
         },
       };
 
-      const user = AuthenticationService.createUserFromJWT(payload);
+      const result = AuthenticationService.createAuthenticatedUserFromJWT(payload);
 
-      expect(user.userId).toBe(validUserId);
-      expect(getRateLimitValue(user.rateLimit)).toBe(120); // TIER2のデフォルト
-      expect(getRateLimitWindowSeconds(user.rateLimit)).toBe(60);
-      expect(getRateLimitSource(user.rateLimit)).toBe(RateLimitSource.TIER2_DEFAULT);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.user.userId).toBe(validUserId);
+        expect(getRateLimitValue(result.user.rateLimit)).toBe(120); // TIER2のデフォルト
+        expect(getRateLimitWindowSeconds(result.user.rateLimit)).toBe(60);
+        expect(getRateLimitSource(result.user.rateLimit)).toBe(RateLimitSource.TIER2_DEFAULT);
+      }
     });
 
     it('カスタムレート制限を含むペイロードからユーザーを作成できる', () => {
+      const now = new Date('2024-01-01T12:00:00Z');
+      vi.setSystemTime(now);
+
       const payload: IJWTPayload = {
         sub: validUserId,
+        exp: Math.floor(now.getTime() / 1000) + 3600,
         app_metadata: {
           tier: 'TIER1',
           custom_rate_limit: {
@@ -52,40 +82,58 @@ describe('AuthenticationService', () => {
         },
       };
 
-      const user = AuthenticationService.createUserFromJWT(payload);
+      const result = AuthenticationService.createAuthenticatedUserFromJWT(payload);
 
-      expect(user.userId).toBe(validUserId);
-      expect(getRateLimitValue(user.rateLimit)).toBe(500);
-      expect(getRateLimitWindowSeconds(user.rateLimit)).toBe(60);
-      expect(getRateLimitSource(user.rateLimit)).toBe(RateLimitSource.CUSTOM);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.user.userId).toBe(validUserId);
+        expect(getRateLimitValue(result.user.rateLimit)).toBe(500);
+        expect(getRateLimitWindowSeconds(result.user.rateLimit)).toBe(60);
+        expect(getRateLimitSource(result.user.rateLimit)).toBe(RateLimitSource.CUSTOM);
+      }
     });
 
     it('無効なユーザーIDの場合エラーになる', () => {
+      const now = new Date('2024-01-01T12:00:00Z');
+      vi.setSystemTime(now);
+
       const payload: IJWTPayload = {
         sub: 'invalid-uuid',
+        exp: Math.floor(now.getTime() / 1000) + 3600,
       };
 
-      expect(() => AuthenticationService.createUserFromJWT(payload)).toThrow(
-        'UserId must be a valid UUID',
-      );
+      const result = AuthenticationService.createAuthenticatedUserFromJWT(payload);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.type).toBe('INVALID_PAYLOAD');
+        expect(result.error.reason).toBe('invalid_user_id');
+        expect(result.error.message).toContain('valid UUID');
+      }
     });
 
     it('無効なティアの場合TIER1をデフォルトとして使用し、警告をログに出力する', () => {
+      const now = new Date('2024-01-01T12:00:00Z');
+      vi.setSystemTime(now);
       const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
       const payload: IJWTPayload = {
         sub: validUserId,
+        exp: Math.floor(now.getTime() / 1000) + 3600,
         app_metadata: {
           tier: 'TIER99',
         },
       };
 
-      const user = AuthenticationService.createUserFromJWT(payload);
+      const result = AuthenticationService.createAuthenticatedUserFromJWT(payload);
 
-      expect(user.userId).toBe(validUserId);
-      expect(getRateLimitValue(user.rateLimit)).toBe(60); // TIER1のデフォルト
-      expect(getRateLimitWindowSeconds(user.rateLimit)).toBe(60);
-      expect(getRateLimitSource(user.rateLimit)).toBe(RateLimitSource.TIER1_DEFAULT);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.user.userId).toBe(validUserId);
+        expect(getRateLimitValue(result.user.rateLimit)).toBe(60); // TIER1のデフォルト
+        expect(getRateLimitWindowSeconds(result.user.rateLimit)).toBe(60);
+        expect(getRateLimitSource(result.user.rateLimit)).toBe(RateLimitSource.TIER1_DEFAULT);
+      }
 
       // 警告が出力されることを確認
       expect(consoleWarnSpy).toHaveBeenCalledWith(
@@ -96,38 +144,110 @@ describe('AuthenticationService', () => {
     });
 
     it('ティア値はcase insensitiveで処理される', () => {
+      const now = new Date('2024-01-01T12:00:00Z');
+      vi.setSystemTime(now);
+
       // 小文字のティア
       const payloadLower: IJWTPayload = {
         sub: validUserId,
+        exp: Math.floor(now.getTime() / 1000) + 3600,
         app_metadata: {
           tier: 'tier2',
         },
       };
-      const userLower = AuthenticationService.createUserFromJWT(payloadLower);
-      expect(getRateLimitValue(userLower.rateLimit)).toBe(120);
-      expect(getRateLimitSource(userLower.rateLimit)).toBe(RateLimitSource.TIER2_DEFAULT);
+      const resultLower = AuthenticationService.createAuthenticatedUserFromJWT(payloadLower);
+      expect(resultLower.success).toBe(true);
+      if (resultLower.success) {
+        expect(getRateLimitValue(resultLower.user.rateLimit)).toBe(120);
+        expect(getRateLimitSource(resultLower.user.rateLimit)).toBe(RateLimitSource.TIER2_DEFAULT);
+      }
 
       // 混在ケースのティア
       const payloadMixed: IJWTPayload = {
         sub: validUserId,
+        exp: Math.floor(now.getTime() / 1000) + 3600,
         app_metadata: {
           tier: 'Tier3',
         },
       };
-      const userMixed = AuthenticationService.createUserFromJWT(payloadMixed);
-      expect(getRateLimitValue(userMixed.rateLimit)).toBe(300);
-      expect(getRateLimitSource(userMixed.rateLimit)).toBe(RateLimitSource.TIER3_DEFAULT);
+      const resultMixed = AuthenticationService.createAuthenticatedUserFromJWT(payloadMixed);
+      expect(resultMixed.success).toBe(true);
+      if (resultMixed.success) {
+        expect(getRateLimitValue(resultMixed.user.rateLimit)).toBe(300);
+        expect(getRateLimitSource(resultMixed.user.rateLimit)).toBe(RateLimitSource.TIER3_DEFAULT);
+      }
 
       // 前後の空白も除去される
       const payloadSpaces: IJWTPayload = {
         sub: validUserId,
+        exp: Math.floor(now.getTime() / 1000) + 3600,
         app_metadata: {
           tier: '  TIER1  ',
         },
       };
-      const userSpaces = AuthenticationService.createUserFromJWT(payloadSpaces);
-      expect(getRateLimitValue(userSpaces.rateLimit)).toBe(60);
-      expect(getRateLimitSource(userSpaces.rateLimit)).toBe(RateLimitSource.TIER1_DEFAULT);
+      const resultSpaces = AuthenticationService.createAuthenticatedUserFromJWT(payloadSpaces);
+      expect(resultSpaces.success).toBe(true);
+      if (resultSpaces.success) {
+        expect(getRateLimitValue(resultSpaces.user.rateLimit)).toBe(60);
+        expect(getRateLimitSource(resultSpaces.user.rateLimit)).toBe(RateLimitSource.TIER1_DEFAULT);
+      }
+    });
+    it('期限切れトークンの場合エラーを返す', () => {
+      const now = new Date('2024-01-01T12:00:00Z');
+      vi.setSystemTime(now);
+
+      const payload: IJWTPayload = {
+        sub: validUserId,
+        exp: Math.floor(now.getTime() / 1000) - 1, // 1秒前に期限切れ
+      };
+
+      const result = AuthenticationService.createAuthenticatedUserFromJWT(payload);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.type).toBe('INVALID_TOKEN');
+        expect(result.error.reason).toBe('expired');
+        expect(result.error.message).toBe('Token has expired');
+      }
+    });
+
+    it('未来のトークンの場合エラーを返す', () => {
+      const now = new Date('2024-01-01T12:00:00Z');
+      vi.setSystemTime(now);
+
+      const payload: IJWTPayload = {
+        sub: validUserId,
+        exp: Math.floor(now.getTime() / 1000) + 3600,
+        iat: Math.floor(now.getTime() / 1000) + 120, // 2分後に発行
+      };
+
+      const result = AuthenticationService.createAuthenticatedUserFromJWT(payload);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.type).toBe('INVALID_TOKEN');
+        expect(result.error.reason).toBe('not_yet_valid');
+        expect(result.error.message).toBe('Token is not yet valid');
+      }
+    });
+
+    it('有効期限がないトークンの場合エラーを返す', () => {
+      const now = new Date('2024-01-01T12:00:00Z');
+      vi.setSystemTime(now);
+
+      const payload: IJWTPayload = {
+        sub: validUserId,
+        // exp がない
+      };
+
+      const result = AuthenticationService.createAuthenticatedUserFromJWT(payload);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.type).toBe('INVALID_TOKEN');
+        expect(result.error.reason).toBe('missing_exp');
+        expect(result.error.message).toBe('Token is missing expiration time');
+      }
     });
   });
 
@@ -232,7 +352,7 @@ describe('AuthenticationService', () => {
     });
   });
 
-  describe('checkRateLimit', () => {
+  describe('checkRateLimitWithState', () => {
     beforeEach(() => {
       vi.useFakeTimers();
     });
@@ -241,46 +361,122 @@ describe('AuthenticationService', () => {
       vi.useRealTimers();
     });
 
-    it('レート制限内のリクエストを許可する', () => {
+    it('レート制限内のリクエストを許可し、詳細情報を返す', () => {
       const now = new Date('2024-01-01T12:00:00Z');
       vi.setSystemTime(now);
 
-      const payload: IJWTPayload = { sub: validUserId };
-      const user = AuthenticationService.createUserFromJWT(payload);
-      const windowStartTime = new Date('2024-01-01T11:59:30Z'); // 30秒前
+      const payload: IJWTPayload = {
+        sub: validUserId,
+        exp: Math.floor(now.getTime() / 1000) + 3600,
+      };
+      const authResult = AuthenticationService.createAuthenticatedUserFromJWT(payload);
+      expect(authResult.success).toBe(true);
+      if (!authResult.success) throw new Error('Failed to create user');
 
-      const result = AuthenticationService.checkRateLimit(user, 30, windowStartTime);
+      const state: IRateLimitState = {
+        userId: validUserId,
+        requestCount: 30,
+        windowStartTime: new Date('2024-01-01T11:59:30Z'), // 30秒前
+      };
+
+      const result = AuthenticationService.checkRateLimitWithState(authResult.user, state);
 
       expect(result.allowed).toBe(true);
+      expect(result.currentCount).toBe(30);
+      expect(result.limit).toBe(60);
       expect(result.resetTime).toEqual(new Date('2024-01-01T12:00:30Z')); // 60秒ウィンドウ
+      expect(result.remainingSeconds).toBe(30);
+      expect(result.remainingRequests).toBe(30); // 60 - 30 = 30
     });
 
-    it('レート制限を超えたリクエストを拒否する', () => {
+    it('レート制限を超えたリクエストを拒否し、詳細情報を返す', () => {
       const now = new Date('2024-01-01T12:00:00Z');
       vi.setSystemTime(now);
 
-      const payload: IJWTPayload = { sub: validUserId };
-      const user = AuthenticationService.createUserFromJWT(payload);
-      const windowStartTime = new Date('2024-01-01T11:59:30Z');
+      const payload: IJWTPayload = {
+        sub: validUserId,
+        exp: Math.floor(now.getTime() / 1000) + 3600,
+      };
+      const authResult = AuthenticationService.createAuthenticatedUserFromJWT(payload);
+      expect(authResult.success).toBe(true);
+      if (!authResult.success) throw new Error('Failed to create user');
 
-      const result = AuthenticationService.checkRateLimit(user, 60, windowStartTime); // 制限値に達している
+      const state: IRateLimitState = {
+        userId: validUserId,
+        requestCount: 60, // 制限値に達している
+        windowStartTime: new Date('2024-01-01T11:59:30Z'),
+      };
+
+      const result = AuthenticationService.checkRateLimitWithState(authResult.user, state);
 
       expect(result.allowed).toBe(false);
+      expect(result.currentCount).toBe(60);
+      expect(result.limit).toBe(60);
       expect(result.resetTime).toEqual(new Date('2024-01-01T12:00:30Z'));
+      expect(result.remainingSeconds).toBe(30);
+      expect(result.remainingRequests).toBe(0);
     });
 
-    it('ウィンドウが過ぎた場合は新しいウィンドウを開始する', () => {
+    it('ウィンドウが過ぎた場合は新しいウィンドウ情報を返す', () => {
       const now = new Date('2024-01-01T12:01:00Z');
       vi.setSystemTime(now);
 
-      const payload: IJWTPayload = { sub: validUserId };
-      const user = AuthenticationService.createUserFromJWT(payload);
-      const windowStartTime = new Date('2024-01-01T11:59:00Z'); // 2分前
+      const payload: IJWTPayload = {
+        sub: validUserId,
+        exp: Math.floor(now.getTime() / 1000) + 3600,
+      };
+      const authResult = AuthenticationService.createAuthenticatedUserFromJWT(payload);
+      expect(authResult.success).toBe(true);
+      if (!authResult.success) throw new Error('Failed to create user');
 
-      const result = AuthenticationService.checkRateLimit(user, 100, windowStartTime);
+      const state: IRateLimitState = {
+        userId: validUserId,
+        requestCount: 100,
+        windowStartTime: new Date('2024-01-01T11:59:00Z'), // 2分前
+      };
+
+      const result = AuthenticationService.checkRateLimitWithState(authResult.user, state);
 
       expect(result.allowed).toBe(true);
+      expect(result.currentCount).toBe(0); // 新しいウィンドウ
+      expect(result.limit).toBe(60);
       expect(result.resetTime).toEqual(new Date('2024-01-01T12:02:00Z')); // 新しいウィンドウ
+      expect(result.remainingSeconds).toBe(60);
+      expect(result.remainingRequests).toBe(60);
+    });
+
+    it('カスタムレート制限で正しく動作する', () => {
+      const now = new Date('2024-01-01T12:00:00Z');
+      vi.setSystemTime(now);
+
+      const payload: IJWTPayload = {
+        sub: validUserId,
+        exp: Math.floor(now.getTime() / 1000) + 3600,
+        app_metadata: {
+          custom_rate_limit: {
+            limit: 500,
+            window_seconds: 120,
+          },
+        },
+      };
+      const authResult = AuthenticationService.createAuthenticatedUserFromJWT(payload);
+      expect(authResult.success).toBe(true);
+      if (!authResult.success) throw new Error('Failed to create user');
+
+      const state: IRateLimitState = {
+        userId: validUserId,
+        requestCount: 250,
+        windowStartTime: new Date('2024-01-01T11:59:00Z'), // 1分前
+      };
+
+      const result = AuthenticationService.checkRateLimitWithState(authResult.user, state);
+
+      expect(result.allowed).toBe(true);
+      expect(result.currentCount).toBe(250);
+      expect(result.limit).toBe(500);
+      expect(result.resetTime).toEqual(new Date('2024-01-01T12:01:00Z')); // 120秒ウィンドウ
+      expect(result.remainingSeconds).toBe(60);
+      expect(result.remainingRequests).toBe(250); // 500 - 250 = 250
     });
   });
 
