@@ -1,8 +1,8 @@
-import { createFilePath, convertUrlPathToFilePath } from '../value-objects/FilePath';
+import { createFilePath } from '../value-objects/FilePath';
 import type { ContentType } from '../value-objects/ContentType';
 import { createContentType } from '../value-objects/ContentType';
 import type { OpenDataResource } from '../value-objects/OpenDataResource';
-import { createOpenDataResource, isResourceAccessible } from '../value-objects/OpenDataResource';
+import { isResourceAccessible } from '../value-objects/OpenDataResource';
 
 /**
  * データアクセスのビジネスロジックを提供するドメインサービス
@@ -18,20 +18,6 @@ export class DataAccessService {
   static validateResourcePath(path: string): void {
     // createFilePathの検証を利用
     createFilePath(path);
-  }
-
-  /**
-   * URLパスからオープンデータリソースを作成する
-   */
-  static createResourceFromUrl(urlPath: string): OpenDataResource {
-    const filePath = convertUrlPathToFilePath(urlPath);
-    const contentType = this.getContentTypeFromPath(filePath.value);
-
-    return createOpenDataResource({
-      path: filePath,
-      contentType,
-      // ファイルサイズは後で設定される
-    });
   }
 
   /**

@@ -25,42 +25,6 @@ describe('DataAccessService', () => {
     });
   });
 
-  describe('createResourceFromUrl', () => {
-    it('URLパスからリソースを作成する', () => {
-      const resource = DataAccessService.createResourceFromUrl('/secure/319985/r5.json');
-      const path = resource.path;
-      const contentType = resource.contentType;
-
-      expect(path.value).toBe('secure/319985/r5.json');
-      expect(contentType.value).toBe('application/json');
-    });
-
-    it('拡張子からコンテンツタイプを推測する', () => {
-      const testCases = [
-        { url: '/data/report.json', expectedType: 'application/json' },
-        { url: '/data/report.xml', expectedType: 'application/xml' },
-        { url: '/data/report.csv', expectedType: 'text/csv' },
-        { url: '/data/report.txt', expectedType: 'text/plain' },
-        { url: '/data/report.pdf', expectedType: 'application/pdf' },
-      ];
-
-      for (const { url, expectedType } of testCases) {
-        const resource = DataAccessService.createResourceFromUrl(url);
-        expect(resource.contentType.value).toBe(expectedType);
-      }
-    });
-
-    it('不明な拡張子の場合はデフォルトのコンテンツタイプを使用', () => {
-      const resource = DataAccessService.createResourceFromUrl('/data/report.xyz');
-      expect(resource.contentType.value).toBe('application/octet-stream');
-    });
-
-    it('拡張子がない場合はデフォルトのコンテンツタイプを使用', () => {
-      const resource = DataAccessService.createResourceFromUrl('/data/report');
-      expect(resource.contentType.value).toBe('application/octet-stream');
-    });
-  });
-
   describe('validateAccess', () => {
     it('有効なJSONリソースへのアクセスを許可する', () => {
       const resource = createOpenDataResource({
