@@ -4,11 +4,10 @@ import {
   equalsUserId,
   createUserTier,
   getUserTierLevel,
-  getUserTierDefaultRateLimit,
+  TIER_DEFAULT_RATE_LIMITS,
   equalsUserTier,
   userTierToString,
   TierLevel,
-  type IRateLimitConfig,
 } from './index';
 
 describe('Shared kernel exports', () => {
@@ -20,14 +19,13 @@ describe('Shared kernel exports', () => {
   it('should export UserTier functions and types', () => {
     expect(createUserTier).toBeDefined();
     expect(getUserTierLevel).toBeDefined();
-    expect(getUserTierDefaultRateLimit).toBeDefined();
+    expect(TIER_DEFAULT_RATE_LIMITS).toBeDefined();
     expect(equalsUserTier).toBeDefined();
     expect(userTierToString).toBeDefined();
     expect(TierLevel).toBeDefined();
     expect(TierLevel.TIER1).toBe('TIER1');
 
-    // 型のテスト（型が正しくエクスポートされていることを確認）
-    const config: IRateLimitConfig = { limit: 60, windowSeconds: 60 };
-    expect(config).toBeDefined();
+    // 定数のテスト
+    expect(TIER_DEFAULT_RATE_LIMITS[TierLevel.TIER1]).toEqual({ limit: 60, windowSeconds: 60 });
   });
 });

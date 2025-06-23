@@ -1,4 +1,4 @@
-import { TierLevel } from '@nara-opendata/shared-kernel';
+import { TierLevel, TIER_DEFAULT_RATE_LIMITS } from '@nara-opendata/shared-kernel';
 
 /**
  * レート制限の由来
@@ -50,13 +50,20 @@ function createRateLimit(config: IRateLimitConfig): RateLimit {
  * デフォルトのレート制限を作成する
  */
 export function createDefaultRateLimit(tier: TierLevel): RateLimit {
-  const configs: Record<TierLevel, IRateLimitConfig> = {
-    [TierLevel.TIER1]: { limit: 60, windowSeconds: 60, source: RateLimitSource.TIER1_DEFAULT },
-    [TierLevel.TIER2]: { limit: 120, windowSeconds: 60, source: RateLimitSource.TIER2_DEFAULT },
-    [TierLevel.TIER3]: { limit: 300, windowSeconds: 60, source: RateLimitSource.TIER3_DEFAULT },
+  // shared-kernelで定義されたデフォルト値を使用
+  const defaultConfig = TIER_DEFAULT_RATE_LIMITS[tier];
+
+  // ティアに応じたRateLimitSourceを決定
+  const sourceMap: Record<TierLevel, RateLimitSource> = {
+    [TierLevel.TIER1]: RateLimitSource.TIER1_DEFAULT,
+    [TierLevel.TIER2]: RateLimitSource.TIER2_DEFAULT,
+    [TierLevel.TIER3]: RateLimitSource.TIER3_DEFAULT,
   };
 
-  return createRateLimit(configs[tier]);
+  return createRateLimit({
+    ...defaultConfig,
+    source: sourceMap[tier],
+  });
 }
 
 /**

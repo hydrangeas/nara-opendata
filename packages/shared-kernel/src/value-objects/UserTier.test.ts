@@ -3,7 +3,7 @@ import {
   TierLevel,
   createUserTier,
   getUserTierLevel,
-  getUserTierDefaultRateLimit,
+  TIER_DEFAULT_RATE_LIMITS,
   equalsUserTier,
   userTierToString,
 } from './UserTier';
@@ -43,25 +43,32 @@ describe('UserTier', () => {
     });
   });
 
-  describe('getUserTierDefaultRateLimit', () => {
-    it('各ティアの正しいレート制限を返す', () => {
-      const tier1 = createUserTier(TierLevel.TIER1);
-      const tier2 = createUserTier(TierLevel.TIER2);
-      const tier3 = createUserTier(TierLevel.TIER3);
+  describe('TIER_DEFAULT_RATE_LIMITS', () => {
+    it('各ティアの正しいレート制限が定義されている', () => {
+      // TIER1のレート制限
+      expect(TIER_DEFAULT_RATE_LIMITS[TierLevel.TIER1].limit).toBe(60);
+      expect(TIER_DEFAULT_RATE_LIMITS[TierLevel.TIER1].windowSeconds).toBe(60);
 
-      const rateLimit1 = getUserTierDefaultRateLimit(tier1);
-      const rateLimit2 = getUserTierDefaultRateLimit(tier2);
-      const rateLimit3 = getUserTierDefaultRateLimit(tier3);
+      // TIER2のレート制限
+      expect(TIER_DEFAULT_RATE_LIMITS[TierLevel.TIER2].limit).toBe(120);
+      expect(TIER_DEFAULT_RATE_LIMITS[TierLevel.TIER2].windowSeconds).toBe(60);
 
-      // 戻り値が正しい型を持つことを確認（TypeScriptの型推論をテスト）
-      expect(rateLimit1.limit).toBe(60);
-      expect(rateLimit1.windowSeconds).toBe(60);
+      // TIER3のレート制限
+      expect(TIER_DEFAULT_RATE_LIMITS[TierLevel.TIER3].limit).toBe(300);
+      expect(TIER_DEFAULT_RATE_LIMITS[TierLevel.TIER3].windowSeconds).toBe(60);
+    });
 
-      expect(rateLimit2.limit).toBe(120);
-      expect(rateLimit2.windowSeconds).toBe(60);
+    it('定数は変更不可能である', () => {
+      // TypeScriptのreadonly修飾子により、以下のコードはコンパイルエラーになる
+      // TIER_DEFAULT_RATE_LIMITS[TierLevel.TIER1] = { limit: 100, windowSeconds: 100 };
+      // TIER_DEFAULT_RATE_LIMITS[TierLevel.TIER1].limit = 100;
 
-      expect(rateLimit3.limit).toBe(300);
-      expect(rateLimit3.windowSeconds).toBe(60);
+      // オブジェクトが凍結されていることを確認（as constにより読み取り専用）
+      expect(Object.isFrozen(TIER_DEFAULT_RATE_LIMITS)).toBe(false); // as constは実行時の凍結ではない
+
+      // 値が正しく読み取れることを確認
+      const tier1Limit = TIER_DEFAULT_RATE_LIMITS[TierLevel.TIER1];
+      expect(tier1Limit).toEqual({ limit: 60, windowSeconds: 60 });
     });
   });
 

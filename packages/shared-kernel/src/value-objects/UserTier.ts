@@ -14,12 +14,14 @@ export enum TierLevel {
 export type UserTier = TierLevel & { readonly brand: unique symbol };
 
 /**
- * レート制限の設定を表す型
+ * 各ティアのデフォルトレート制限設定
+ * これはビジネスルールとして定義された値
  */
-export interface IRateLimitConfig {
-  limit: number;
-  windowSeconds: number;
-}
+export const TIER_DEFAULT_RATE_LIMITS = {
+  [TierLevel.TIER1]: { limit: 60, windowSeconds: 60 },
+  [TierLevel.TIER2]: { limit: 120, windowSeconds: 60 },
+  [TierLevel.TIER3]: { limit: 300, windowSeconds: 60 },
+} as const;
 
 /**
  * UserTierを作成する
@@ -37,18 +39,6 @@ export function createUserTier(level: TierLevel): UserTier {
  */
 export function getUserTierLevel(tier: UserTier): TierLevel {
   return tier as TierLevel;
-}
-
-/**
- * UserTierのデフォルトレート制限を取得する
- */
-export function getUserTierDefaultRateLimit(tier: UserTier): IRateLimitConfig {
-  const rateLimits: Record<TierLevel, IRateLimitConfig> = {
-    [TierLevel.TIER1]: { limit: 60, windowSeconds: 60 },
-    [TierLevel.TIER2]: { limit: 120, windowSeconds: 60 },
-    [TierLevel.TIER3]: { limit: 300, windowSeconds: 60 },
-  };
-  return rateLimits[tier as TierLevel];
 }
 
 /**
