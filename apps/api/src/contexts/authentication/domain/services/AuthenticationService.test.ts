@@ -7,13 +7,13 @@ import {
 import {
   getUserId,
   getRateLimit as getAuthenticatedUserRateLimit,
-} from '../models/AuthenticatedUser';
+} from '../value-objects/AuthenticatedUser';
 import {
   RateLimitSource,
   getRateLimitValue,
   getRateLimitWindowSeconds,
   getRateLimitSource,
-} from '../models/RateLimit';
+} from '../value-objects/RateLimit';
 
 describe('AuthenticationService', () => {
   const validUserId = '123e4567-e89b-12d3-a456-426614174000';
