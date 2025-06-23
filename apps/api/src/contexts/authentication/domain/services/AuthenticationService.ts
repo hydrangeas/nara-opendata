@@ -31,7 +31,12 @@ export interface IAuthenticationError {
   type: 'INVALID_TOKEN' | 'INVALID_PAYLOAD';
   reason: 'expired' | 'not_yet_valid' | 'missing_exp' | 'invalid_user_id';
   message: string;
-  details?: unknown;
+  details?: {
+    exp?: number | undefined; // トークンの有効期限（UNIX時刻）
+    iat?: number | undefined; // トークンの発行時刻（UNIX時刻）
+    now?: number | undefined; // 検証時の現在時刻（UNIX時刻）
+    error?: unknown | undefined; // その他のエラー情報
+  };
 }
 
 /**
@@ -116,7 +121,7 @@ export const AuthenticationService = {
           message: this.getErrorMessage(
             timingValidation.reason as 'expired' | 'not_yet_valid' | 'missing_exp',
           ),
-          details: timingValidation.details,
+          details: timingValidation.details || {},
         },
       };
     }
@@ -153,6 +158,9 @@ export const AuthenticationService = {
           type: 'INVALID_PAYLOAD',
           reason: 'invalid_user_id',
           message: error instanceof Error ? error.message : 'Invalid JWT payload',
+          details: {
+            error: error instanceof Error ? error.message : error,
+          },
         },
       };
     }
