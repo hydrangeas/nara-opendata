@@ -76,6 +76,12 @@ export class DataAccessService {
    * ファイルパスから適切なコンテンツタイプを推測する
    */
   static getContentTypeFromPath(path: string): ContentType {
+    // 複合拡張子を先にチェック
+    const lowerPath = path.toLowerCase();
+    if (lowerPath.endsWith('.tar.gz')) return createContentType('application/gzip');
+    if (lowerPath.endsWith('.tar.bz2')) return createContentType('application/x-bzip2');
+    if (lowerPath.endsWith('.tar.xz')) return createContentType('application/x-xz');
+
     // 拡張子を取得（大文字小文字を区別しない）
     const extension = path.split('.').pop()?.toLowerCase();
 

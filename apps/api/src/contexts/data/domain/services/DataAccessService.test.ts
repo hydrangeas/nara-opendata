@@ -154,5 +154,19 @@ describe('DataAccessService', () => {
         expect(contentType.value).toBe(expectedType);
       }
     });
+
+    it('複合拡張子を正しく認識する', () => {
+      const testCases = [
+        { path: 'data/archive.tar.gz', expectedType: 'application/gzip' },
+        { path: 'data/archive.TAR.GZ', expectedType: 'application/gzip' }, // 大文字
+        { path: 'data/archive.tar.bz2', expectedType: 'application/x-bzip2' },
+        { path: 'data/archive.tar.xz', expectedType: 'application/x-xz' },
+      ];
+
+      for (const { path, expectedType } of testCases) {
+        const contentType = DataAccessService.getContentTypeFromPath(path);
+        expect(contentType.value).toBe(expectedType);
+      }
+    });
   });
 });

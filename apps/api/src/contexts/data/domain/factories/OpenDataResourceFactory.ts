@@ -89,7 +89,12 @@ export class OpenDataResourceFactory {
         resources.push(resource);
       } catch (error) {
         // 無効なパスはスキップ
-        // ログに記録する場合はここで行う
+        // 開発環境でのみ警告を出力（本番環境では静かにスキップ）
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(`[OpenDataResourceFactory] Skipped invalid path: ${path}`, error);
+        }
+        // TODO: 将来的には適切なロガー（pino等）を使用して、
+        // 本番環境でも適切なログレベルで記録する
       }
     }
 
