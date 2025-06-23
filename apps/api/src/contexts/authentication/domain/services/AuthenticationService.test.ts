@@ -70,7 +70,9 @@ describe('AuthenticationService', () => {
       );
     });
 
-    it('無効なティアの場合TIER1をデフォルトとして使用する', () => {
+    it('無効なティアの場合TIER1をデフォルトとして使用し、警告をログに出力する', () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
       const payload: IJWTPayload = {
         sub: validUserId,
         app_metadata: {
@@ -84,6 +86,48 @@ describe('AuthenticationService', () => {
       expect(getRateLimitValue(user.rateLimit)).toBe(60); // TIER1のデフォルト
       expect(getRateLimitWindowSeconds(user.rateLimit)).toBe(60);
       expect(getRateLimitSource(user.rateLimit)).toBe(RateLimitSource.TIER1_DEFAULT);
+
+      // 警告が出力されることを確認
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Unknown tier value: "TIER99", defaulting to TIER1',
+      );
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('ティア値はcase insensitiveで処理される', () => {
+      // 小文字のティア
+      const payloadLower: IJWTPayload = {
+        sub: validUserId,
+        app_metadata: {
+          tier: 'tier2',
+        },
+      };
+      const userLower = AuthenticationService.createUserFromJWT(payloadLower);
+      expect(getRateLimitValue(userLower.rateLimit)).toBe(120);
+      expect(getRateLimitSource(userLower.rateLimit)).toBe(RateLimitSource.TIER2_DEFAULT);
+
+      // 混在ケースのティア
+      const payloadMixed: IJWTPayload = {
+        sub: validUserId,
+        app_metadata: {
+          tier: 'Tier3',
+        },
+      };
+      const userMixed = AuthenticationService.createUserFromJWT(payloadMixed);
+      expect(getRateLimitValue(userMixed.rateLimit)).toBe(300);
+      expect(getRateLimitSource(userMixed.rateLimit)).toBe(RateLimitSource.TIER3_DEFAULT);
+
+      // 前後の空白も除去される
+      const payloadSpaces: IJWTPayload = {
+        sub: validUserId,
+        app_metadata: {
+          tier: '  TIER1  ',
+        },
+      };
+      const userSpaces = AuthenticationService.createUserFromJWT(payloadSpaces);
+      expect(getRateLimitValue(userSpaces.rateLimit)).toBe(60);
+      expect(getRateLimitSource(userSpaces.rateLimit)).toBe(RateLimitSource.TIER1_DEFAULT);
     });
   });
 

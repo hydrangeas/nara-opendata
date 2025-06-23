@@ -25,6 +25,36 @@ export interface IJWTPayload {
 }
 
 /**
+ * 文字列からTierLevelへの安全な変換
+ * @param tierString - 変換する文字列（case insensitive）
+ * @returns TierLevel - 不明な値の場合はTIER1を返す
+ */
+function parseTierLevel(tierString: string | undefined): TierLevel {
+  if (!tierString) {
+    return TierLevel.TIER1;
+  }
+
+  const normalizedTier = tierString.toUpperCase().trim();
+
+  // 明示的なマッピング
+  const tierMap: Record<string, TierLevel | undefined> = {
+    TIER1: TierLevel.TIER1,
+    TIER2: TierLevel.TIER2,
+    TIER3: TierLevel.TIER3,
+  };
+
+  const tierLevel = tierMap[normalizedTier];
+
+  if (!tierLevel) {
+    // TODO: 本番環境では構造化ログを使用すべき
+    console.warn(`Unknown tier value: "${tierString}", defaulting to TIER1`);
+    return TierLevel.TIER1;
+  }
+
+  return tierLevel;
+}
+
+/**
  * 認証に関するドメインサービス
  */
 export const AuthenticationService = {
@@ -46,26 +76,7 @@ export const AuthenticationService = {
     }
 
     // デフォルトレート制限を使用
-    const tierString = payload.app_metadata?.tier || 'TIER1';
-
-    // 文字列をTierLevel型に変換（型安全性のためのチェック）
-    let tierLevel: TierLevel;
-    switch (tierString) {
-      case 'TIER1':
-        tierLevel = TierLevel.TIER1;
-        break;
-      case 'TIER2':
-        tierLevel = TierLevel.TIER2;
-        break;
-      case 'TIER3':
-        tierLevel = TierLevel.TIER3;
-        break;
-      default:
-        // 不明なティアの場合はTIER1をデフォルトとする
-        tierLevel = TierLevel.TIER1;
-        break;
-    }
-
+    const tierLevel = parseTierLevel(payload.app_metadata?.tier);
     const rateLimit = createDefaultRateLimit(tierLevel);
     return AuthenticatedUser.create(userId, rateLimit);
   },
