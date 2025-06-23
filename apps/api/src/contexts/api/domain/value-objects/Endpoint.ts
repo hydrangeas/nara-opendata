@@ -17,8 +17,11 @@ export function createEndpoint(path: string): Endpoint {
     throw new Error('Endpoint path cannot be empty');
   }
 
-  // パスの正規化（先頭のスラッシュを確保）
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  // パスの正規化
+  // 1. 先頭の連続するスラッシュを単一のスラッシュに置換
+  // 2. スラッシュで始まらない場合は追加
+  const trimmedPath = path.replace(/^\/+/, '/');
+  const normalizedPath = trimmedPath.startsWith('/') ? trimmedPath : `/${trimmedPath}`;
 
   return { path: normalizedPath } as Endpoint;
 }

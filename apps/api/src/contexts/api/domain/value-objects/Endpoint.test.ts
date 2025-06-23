@@ -18,6 +18,17 @@ describe('Endpoint', () => {
       expect(getEndpointPath(endpoint)).toBe('/');
     });
 
+    it('連続するスラッシュを単一のスラッシュに正規化する', () => {
+      const endpoint1 = createEndpoint('//api/v1/data');
+      expect(getEndpointPath(endpoint1)).toBe('/api/v1/data');
+
+      const endpoint2 = createEndpoint('///api/v1/data');
+      expect(getEndpointPath(endpoint2)).toBe('/api/v1/data');
+
+      const endpoint3 = createEndpoint('////');
+      expect(getEndpointPath(endpoint3)).toBe('/');
+    });
+
     it('空文字を拒否する', () => {
       expect(() => createEndpoint('')).toThrow('Endpoint path cannot be empty');
       expect(() => createEndpoint('  ')).toThrow('Endpoint path cannot be empty');
