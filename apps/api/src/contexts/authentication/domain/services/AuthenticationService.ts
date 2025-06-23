@@ -85,13 +85,13 @@ export interface IRateLimitState {
 }
 
 /**
- * 文字列からTierLevelへの安全な変換
+ * 文字列からTierLevelへの安全な変換（判別共用体を使用）
  * @param tierString - 変換する文字列（case insensitive）
- * @returns TierLevel - 不明な値の場合はTIER1を返す
+ * @returns 変換結果と警告情報
  */
-function parseTierLevel(tierString: string | undefined): TierLevel {
+function parseTierLevel(tierString: string | undefined): { level: TierLevel; warning?: string } {
   if (!tierString) {
-    return TierLevel.TIER1;
+    return { level: TierLevel.TIER1 };
   }
 
   const normalizedTier = tierString.toUpperCase().trim();
@@ -106,12 +106,13 @@ function parseTierLevel(tierString: string | undefined): TierLevel {
   const tierLevel = tierMap[normalizedTier];
 
   if (!tierLevel) {
-    // TODO: 本番環境では構造化ログを使用すべき
-    console.warn(`Unknown tier value: "${tierString}", defaulting to TIER1`);
-    return TierLevel.TIER1;
+    return {
+      level: TierLevel.TIER1,
+      warning: `Unknown tier value: "${tierString}", defaulting to TIER1`,
+    };
   }
 
-  return tierLevel;
+  return { level: tierLevel };
 }
 
 /**
@@ -170,8 +171,15 @@ export const AuthenticationService = {
       }
 
       // デフォルトレート制限を使用
-      const tierLevel = parseTierLevel(payload.app_metadata?.tier);
-      const rateLimit = createDefaultRateLimit(tierLevel);
+      const tierResult = parseTierLevel(payload.app_metadata?.tier);
+
+      // 警告があればログ出力
+      if (tierResult.warning) {
+        // TODO: 本番環境では構造化ログを使用すべき
+        console.warn(tierResult.warning);
+      }
+
+      const rateLimit = createDefaultRateLimit(tierResult.level);
       return {
         success: true,
         user: AuthenticatedUser.create(userId, rateLimit),
