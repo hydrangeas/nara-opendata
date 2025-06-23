@@ -21,13 +21,13 @@ export default tseslint.config(
       '**/playwright-report/',
       '**/*.log',
       '**/.DS_Store',
-      '**/data/'
+      '**/data/',
     ],
   },
-  
+
   // 基本のESLint推奨設定
   js.configs.recommended,
-  
+
   // グローバル設定
   {
     languageOptions: {
@@ -40,36 +40,42 @@ export default tseslint.config(
       },
     },
   },
-  
+
   // TypeScriptファイル設定
   {
     files: ['**/*.ts', '**/*.tsx'],
-    extends: [
-      ...tseslint.configs.strict,
-      ...tseslint.configs.stylistic,
-    ],
+    extends: [...tseslint.configs.strict, ...tseslint.configs.stylistic],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        project: ['./tsconfig.json', './apps/*/tsconfig.json', './packages/*/tsconfig.json'],
+        projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
     },
     rules: {
       // TypeScript固有のルール
       '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/no-unused-vars': ['error', {
-        argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_',
-      }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+        },
+      ],
       '@typescript-eslint/no-non-null-assertion': 'warn',
-      '@typescript-eslint/explicit-function-return-type': ['error', {
-        allowExpressions: true,
-        allowTypedFunctionExpressions: true,
-      }],
-      '@typescript-eslint/consistent-type-imports': ['error', {
-        prefer: 'type-imports',
-      }],
+      '@typescript-eslint/explicit-function-return-type': [
+        'error',
+        {
+          allowExpressions: true,
+          allowTypedFunctionExpressions: true,
+        },
+      ],
+      '@typescript-eslint/consistent-type-imports': [
+        'error',
+        {
+          prefer: 'type-imports',
+        },
+      ],
       '@typescript-eslint/naming-convention': [
         'error',
         {
@@ -91,12 +97,12 @@ export default tseslint.config(
       ],
     },
   },
-  
+
   // React/JSXファイル設定
   {
     files: ['apps/web/**/*.{ts,tsx,js,jsx}'],
     plugins: {
-      'react': reactPlugin,
+      react: reactPlugin,
       'react-hooks': reactHooksPlugin,
     },
     languageOptions: {
@@ -114,11 +120,14 @@ export default tseslint.config(
       'react/jsx-no-leaked-render': 'error',
       'react/jsx-boolean-value': ['error', 'never'],
       'react/self-closing-comp': 'error',
-      'react/jsx-sort-props': ['error', {
-        callbacksLast: true,
-        shorthandFirst: true,
-        reservedFirst: true,
-      }],
+      'react/jsx-sort-props': [
+        'error',
+        {
+          callbacksLast: true,
+          shorthandFirst: true,
+          reservedFirst: true,
+        },
+      ],
     },
     settings: {
       react: {
@@ -126,7 +135,7 @@ export default tseslint.config(
       },
     },
   },
-  
+
   // Node.js（APIサーバー）設定
   {
     files: ['apps/api/**/*.ts', 'scripts/**/*.{js,ts}'],
@@ -140,7 +149,7 @@ export default tseslint.config(
       '@typescript-eslint/no-var-requires': 'off', // scriptsでrequire許可
     },
   },
-  
+
   // テストファイル設定
   {
     files: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}', '**/test/**', '**/tests/**'],
@@ -155,7 +164,7 @@ export default tseslint.config(
       '@typescript-eslint/explicit-function-return-type': 'off',
     },
   },
-  
+
   // 設定ファイル
   {
     files: ['**/*.config.{js,ts}', '**/.*rc.{js,ts}'],
@@ -164,7 +173,7 @@ export default tseslint.config(
       '@typescript-eslint/explicit-function-return-type': 'off',
     },
   },
-  
+
   // Prettier統合（最後に配置）
   prettierRecommended,
 );

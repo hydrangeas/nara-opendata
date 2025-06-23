@@ -1,11 +1,31 @@
-// TODO: This is a placeholder test file for initial setup (issue #14)
-// This file will be replaced with actual tests in subsequent issues
-
 import { describe, it, expect } from 'vitest';
-import { placeholder } from './index';
+import {
+  createUserId,
+  equalsUserId,
+  createUserTier,
+  getUserTierLevel,
+  TIER_DEFAULT_RATE_LIMITS,
+  equalsUserTier,
+  userTierToString,
+  TierLevel,
+} from './index';
 
-describe('Placeholder test', () => {
-  it('should be defined', () => {
-    expect(placeholder).toBe('shared-kernel');
+describe('Shared kernel exports', () => {
+  it('should export UserId functions', () => {
+    expect(createUserId).toBeDefined();
+    expect(equalsUserId).toBeDefined();
+  });
+
+  it('should export UserTier functions and types', () => {
+    expect(createUserTier).toBeDefined();
+    expect(getUserTierLevel).toBeDefined();
+    expect(TIER_DEFAULT_RATE_LIMITS).toBeDefined();
+    expect(equalsUserTier).toBeDefined();
+    expect(userTierToString).toBeDefined();
+    expect(TierLevel).toBeDefined();
+    expect(TierLevel.TIER1).toBe('TIER1');
+
+    // 定数のテスト
+    expect(TIER_DEFAULT_RATE_LIMITS[TierLevel.TIER1]).toEqual({ limit: 60, windowSeconds: 60 });
   });
 });
