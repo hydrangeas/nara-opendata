@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createUserId } from '@nara-opendata/shared-kernel';
+import { createUserId, TierLevel } from '@nara-opendata/shared-kernel';
 import { AuthenticatedUser } from './AuthenticatedUser';
 import {
   RateLimitSource,
@@ -16,7 +16,7 @@ describe('AuthenticatedUser', () => {
 
   describe('create', () => {
     it('ユーザーIDとレート制限でユーザーを作成できる', () => {
-      const rateLimit = createDefaultRateLimit('TIER1');
+      const rateLimit = createDefaultRateLimit(TierLevel.TIER1);
       const user = AuthenticatedUser.create(testUserId, rateLimit);
 
       expect(user.userId).toBe(testUserId);
@@ -27,9 +27,9 @@ describe('AuthenticatedUser', () => {
     });
 
     it('各ティアのデフォルトレート制限でユーザーを作成できる', () => {
-      const rateLimit1 = createDefaultRateLimit('TIER1');
-      const rateLimit2 = createDefaultRateLimit('TIER2');
-      const rateLimit3 = createDefaultRateLimit('TIER3');
+      const rateLimit1 = createDefaultRateLimit(TierLevel.TIER1);
+      const rateLimit2 = createDefaultRateLimit(TierLevel.TIER2);
+      const rateLimit3 = createDefaultRateLimit(TierLevel.TIER3);
 
       const user1 = AuthenticatedUser.create(testUserId, rateLimit1);
       const user2 = AuthenticatedUser.create(testUserId, rateLimit2);
@@ -58,7 +58,7 @@ describe('AuthenticatedUser', () => {
 
   describe('equals', () => {
     it('同じ属性のユーザーは等しい', () => {
-      const rateLimit = createDefaultRateLimit('TIER1');
+      const rateLimit = createDefaultRateLimit(TierLevel.TIER1);
       const user1 = AuthenticatedUser.create(testUserId, rateLimit);
       const user2 = AuthenticatedUser.create(testUserId, rateLimit);
 
@@ -67,7 +67,7 @@ describe('AuthenticatedUser', () => {
 
     it('異なるユーザーIDのユーザーは等しくない', () => {
       const otherId = createUserId('987f6543-e21b-12d3-a456-426614174000');
-      const rateLimit = createDefaultRateLimit('TIER1');
+      const rateLimit = createDefaultRateLimit(TierLevel.TIER1);
       const user1 = AuthenticatedUser.create(testUserId, rateLimit);
       const user2 = AuthenticatedUser.create(otherId, rateLimit);
 
@@ -75,8 +75,8 @@ describe('AuthenticatedUser', () => {
     });
 
     it('異なるレート制限のユーザーは等しくない', () => {
-      const rateLimit1 = createDefaultRateLimit('TIER1');
-      const rateLimit2 = createDefaultRateLimit('TIER2');
+      const rateLimit1 = createDefaultRateLimit(TierLevel.TIER1);
+      const rateLimit2 = createDefaultRateLimit(TierLevel.TIER2);
       const user1 = AuthenticatedUser.create(testUserId, rateLimit1);
       const user2 = AuthenticatedUser.create(testUserId, rateLimit2);
 
@@ -84,7 +84,7 @@ describe('AuthenticatedUser', () => {
     });
 
     it('同じ値でも由来が異なるレート制限のユーザーは等しくない', () => {
-      const defaultRateLimit = createDefaultRateLimit('TIER1'); // 60/60s
+      const defaultRateLimit = createDefaultRateLimit(TierLevel.TIER1); // 60/60s
       const customRateLimit = createCustomRateLimit(60, 60); // 同じ値だがカスタム
       const user1 = AuthenticatedUser.create(testUserId, defaultRateLimit);
       const user2 = AuthenticatedUser.create(testUserId, customRateLimit);

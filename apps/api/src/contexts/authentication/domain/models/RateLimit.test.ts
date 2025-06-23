@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { TierLevel } from '@nara-opendata/shared-kernel';
 import {
   RateLimitSource,
   createDefaultRateLimit,
@@ -15,7 +16,7 @@ import {
 describe('RateLimit', () => {
   describe('createDefaultRateLimit', () => {
     it('TIER1のデフォルトレート制限を作成できる', () => {
-      const rateLimit = createDefaultRateLimit('TIER1');
+      const rateLimit = createDefaultRateLimit(TierLevel.TIER1);
       expect(getRateLimitValue(rateLimit)).toBe(60);
       expect(getRateLimitWindowSeconds(rateLimit)).toBe(60);
       expect(getRateLimitSource(rateLimit)).toBe(RateLimitSource.TIER1_DEFAULT);
@@ -23,7 +24,7 @@ describe('RateLimit', () => {
     });
 
     it('TIER2のデフォルトレート制限を作成できる', () => {
-      const rateLimit = createDefaultRateLimit('TIER2');
+      const rateLimit = createDefaultRateLimit(TierLevel.TIER2);
       expect(getRateLimitValue(rateLimit)).toBe(120);
       expect(getRateLimitWindowSeconds(rateLimit)).toBe(60);
       expect(getRateLimitSource(rateLimit)).toBe(RateLimitSource.TIER2_DEFAULT);
@@ -31,15 +32,11 @@ describe('RateLimit', () => {
     });
 
     it('TIER3のデフォルトレート制限を作成できる', () => {
-      const rateLimit = createDefaultRateLimit('TIER3');
+      const rateLimit = createDefaultRateLimit(TierLevel.TIER3);
       expect(getRateLimitValue(rateLimit)).toBe(300);
       expect(getRateLimitWindowSeconds(rateLimit)).toBe(60);
       expect(getRateLimitSource(rateLimit)).toBe(RateLimitSource.TIER3_DEFAULT);
       expect(isCustomRateLimit(rateLimit)).toBe(false);
-    });
-
-    it('無効なティアの場合エラーになる', () => {
-      expect(() => createDefaultRateLimit('TIER99')).toThrow('Invalid tier level: TIER99');
     });
   });
 
@@ -84,7 +81,7 @@ describe('RateLimit', () => {
     });
 
     it('デフォルトレート制限でも正しく計算する', () => {
-      const rateLimit = createDefaultRateLimit('TIER2');
+      const rateLimit = createDefaultRateLimit(TierLevel.TIER2);
       expect(getRateLimitRequestsPerSecond(rateLimit)).toBe(2); // 120/60
     });
   });
@@ -97,13 +94,13 @@ describe('RateLimit', () => {
     });
 
     it('同じティアのデフォルトRateLimitは等しい', () => {
-      const rateLimit1 = createDefaultRateLimit('TIER1');
-      const rateLimit2 = createDefaultRateLimit('TIER1');
+      const rateLimit1 = createDefaultRateLimit(TierLevel.TIER1);
+      const rateLimit2 = createDefaultRateLimit(TierLevel.TIER1);
       expect(equalsRateLimit(rateLimit1, rateLimit2)).toBe(true);
     });
 
     it('同じ値でも由来が異なるRateLimitは等しくない', () => {
-      const rateLimit1 = createDefaultRateLimit('TIER1'); // 60/60s
+      const rateLimit1 = createDefaultRateLimit(TierLevel.TIER1); // 60/60s
       const rateLimit2 = createCustomRateLimit(60, 60); // 同じ値だがカスタム
       expect(equalsRateLimit(rateLimit1, rateLimit2)).toBe(false);
     });

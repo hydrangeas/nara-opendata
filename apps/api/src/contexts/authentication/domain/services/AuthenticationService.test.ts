@@ -74,7 +74,7 @@ describe('AuthenticationService', () => {
       );
     });
 
-    it('無効なティアの場合エラーになる', () => {
+    it('無効なティアの場合TIER1をデフォルトとして使用する', () => {
       const payload: IJWTPayload = {
         sub: validUserId,
         app_metadata: {
@@ -82,9 +82,12 @@ describe('AuthenticationService', () => {
         },
       };
 
-      expect(() => AuthenticationService.createUserFromJWT(payload)).toThrow(
-        'Invalid tier level: TIER99',
-      );
+      const user = AuthenticationService.createUserFromJWT(payload);
+
+      expect(user.userId).toBe(validUserId);
+      expect(getRateLimitValue(user.rateLimit)).toBe(60); // TIER1のデフォルト
+      expect(getRateLimitWindowSeconds(user.rateLimit)).toBe(60);
+      expect(getRateLimitSource(user.rateLimit)).toBe(RateLimitSource.TIER1_DEFAULT);
     });
   });
 

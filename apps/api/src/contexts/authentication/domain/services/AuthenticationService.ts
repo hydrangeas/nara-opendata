@@ -1,4 +1,4 @@
-import { createUserId } from '@nara-opendata/shared-kernel';
+import { createUserId, TierLevel } from '@nara-opendata/shared-kernel';
 import { AuthenticatedUser } from '../models/AuthenticatedUser';
 import {
   createDefaultRateLimit,
@@ -46,8 +46,27 @@ export const AuthenticationService = {
     }
 
     // デフォルトレート制限を使用
-    const tier = payload.app_metadata?.tier || 'TIER1';
-    const rateLimit = createDefaultRateLimit(tier);
+    const tierString = payload.app_metadata?.tier || 'TIER1';
+
+    // 文字列をTierLevel型に変換（型安全性のためのチェック）
+    let tierLevel: TierLevel;
+    switch (tierString) {
+      case 'TIER1':
+        tierLevel = TierLevel.TIER1;
+        break;
+      case 'TIER2':
+        tierLevel = TierLevel.TIER2;
+        break;
+      case 'TIER3':
+        tierLevel = TierLevel.TIER3;
+        break;
+      default:
+        // 不明なティアの場合はTIER1をデフォルトとする
+        tierLevel = TierLevel.TIER1;
+        break;
+    }
+
+    const rateLimit = createDefaultRateLimit(tierLevel);
     return AuthenticatedUser.create(userId, rateLimit);
   },
 
