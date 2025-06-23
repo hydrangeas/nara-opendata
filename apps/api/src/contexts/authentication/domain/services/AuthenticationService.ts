@@ -1,15 +1,15 @@
 import { createUserId, TierLevel } from '@nara-opendata/shared-kernel';
-import type { AuthenticatedUser } from '../models/AuthenticatedUser';
+import type { AuthenticatedUser } from '../value-objects/AuthenticatedUser';
 import {
   createAuthenticatedUser,
   getRateLimit as getAuthenticatedUserRateLimit,
-} from '../models/AuthenticatedUser';
+} from '../value-objects/AuthenticatedUser';
 import {
   createDefaultRateLimit,
   createCustomRateLimit,
   getRateLimitWindowSeconds,
   getRateLimitValue,
-} from '../models/RateLimit';
+} from '../value-objects/RateLimit';
 
 /**
  * JWTトークンのペイロード型
