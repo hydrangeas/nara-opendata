@@ -1,6 +1,8 @@
-import { FilePath, equalsFilePath } from './FilePath';
-import { ContentType, equalsContentType, getContentTypeValue } from './ContentType';
-import { FileSize } from './FileSize';
+import type { FilePath } from './FilePath';
+import { equalsFilePath } from './FilePath';
+import type { ContentType } from './ContentType';
+import { equalsContentType, getContentTypeValue } from './ContentType';
+import type { FileSize } from './FileSize';
 
 /**
  * オープンデータリソースを表すバリューオブジェクト
@@ -87,7 +89,7 @@ export function isResourceAccessible(
   ];
 
   // コンテンツタイプのチェック（パラメータを除いたメインタイプで判定）
-  const mainContentType = contentTypeValue.split(';')[0].trim();
+  const mainContentType = contentTypeValue.split(';')[0]?.trim() || '';
   const isAllowedType =
     allowedContentTypes.includes(mainContentType) ||
     mainContentType.includes('+json') || // JSON-LD等

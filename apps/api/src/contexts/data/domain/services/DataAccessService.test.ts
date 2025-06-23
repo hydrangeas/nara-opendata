@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { DataAccessService } from './DataAccessService';
-import { createFilePath, convertUrlPathToFilePath } from '../value-objects/FilePath';
+import { createFilePath } from '../value-objects/FilePath';
 import { createContentType } from '../value-objects/ContentType';
 import { createFileSize } from '../value-objects/FileSize';
 import { createOpenDataResource } from '../value-objects/OpenDataResource';

@@ -1,10 +1,8 @@
-import { createFilePath, convertUrlPathToFilePath, FilePath } from '../value-objects/FilePath';
-import { createContentType, ContentType } from '../value-objects/ContentType';
-import {
-  createOpenDataResource,
-  isResourceAccessible,
-  OpenDataResource,
-} from '../value-objects/OpenDataResource';
+import { createFilePath, convertUrlPathToFilePath } from '../value-objects/FilePath';
+import type { ContentType } from '../value-objects/ContentType';
+import { createContentType } from '../value-objects/ContentType';
+import type { OpenDataResource } from '../value-objects/OpenDataResource';
+import { createOpenDataResource, isResourceAccessible } from '../value-objects/OpenDataResource';
 
 /**
  * データアクセスのビジネスロジックを提供するドメインサービス

@@ -61,7 +61,7 @@ export function isJsonContentType(contentType: ContentType): boolean {
  */
 export function getExtensionForContentType(contentType: ContentType): string {
   // パラメータを除いたメインタイプを取得
-  const mainType = contentType.value.split(';')[0].trim();
+  const mainType = contentType.value.split(';')[0]?.trim() || '';
 
   const extensionMap: Record<string, string> = {
     'application/json': '.json',
