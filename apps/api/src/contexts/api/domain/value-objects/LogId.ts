@@ -47,14 +47,6 @@ export function equalsLogId(a: LogId, b: LogId): boolean {
 }
 
 /**
- * LogIdのキー値を取得する（Map/Setで使用）
- * UUIDは既に一意なので、値をそのままキーとして使用
- */
-export function hashCodeLogId(logId: LogId): string {
-  return logId.value;
-}
-
-/**
  * 新しいLogIdを生成する（ファクトリメソッド）
  */
 export function generateLogId(): LogId {

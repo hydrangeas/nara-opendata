@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createLogId, getLogIdValue, equalsLogId, hashCodeLogId, generateLogId } from './LogId';
+import { createLogId, getLogIdValue, equalsLogId, generateLogId } from './LogId';
 
 describe('LogId', () => {
   describe('createLogId', () => {
@@ -54,14 +54,6 @@ describe('LogId', () => {
       const logId1 = createLogId('123e4567-e89b-42d3-a456-426614174000');
       const logId2 = createLogId('987e6543-e21b-42d3-a456-426614174000');
       expect(equalsLogId(logId1, logId2)).toBe(false);
-    });
-  });
-
-  describe('hashCodeLogId', () => {
-    it('LogIdのハッシュコードを返す', () => {
-      const uuid = '123e4567-e89b-42d3-a456-426614174000';
-      const logId = createLogId(uuid);
-      expect(hashCodeLogId(logId)).toBe(uuid.toLowerCase());
     });
   });
 
