@@ -77,6 +77,8 @@ export function isResourceAccessible(
   const contentTypeValue = getContentTypeValue(resource.contentType);
 
   // 許可されたコンテンツタイプのリスト
+  // TODO: 許可ファイル形式の設定外部化を検討
+  // 将来的にプロジェクト固有の要件に応じて設定可能にする
   const allowedContentTypes = [
     'application/json',
     'application/xml',

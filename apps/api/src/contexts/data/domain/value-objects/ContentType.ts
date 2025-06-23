@@ -20,12 +20,30 @@ export function createContentType(mimeType: string): ContentType {
   const normalizedType = mimeType.trim().toLowerCase();
 
   // 基本的なMIMEタイプフォーマットを検証
-  // type/subtype または type/subtype; parameters の形式
-  const mimeTypePattern =
-    /^[a-zA-Z0-9][a-zA-Z0-9!#$&^_+.-]*\/[a-zA-Z0-9][a-zA-Z0-9!#$&^_+.-]*(\+[a-zA-Z0-9][a-zA-Z0-9!#$&^_+.-]*)?(\s*;\s*[a-zA-Z0-9-]+=?[a-zA-Z0-9-._~:/?#[\]@!$&'()*+,;=%]*)*$/;
+  // RFC 6838に準拠: type/subtype[+suffix][; parameters]
 
-  if (!mimeTypePattern.test(normalizedType)) {
+  // メインのtype/subtypeとパラメータを分離
+  const [mainType, ...params] = normalizedType.split(';');
+
+  // type/subtype[+suffix]の検証
+  const typeSubtypePattern =
+    /^[a-zA-Z0-9][a-zA-Z0-9!#$&^_+.-]*\/[a-zA-Z0-9][a-zA-Z0-9!#$&^_+.-]*(\+[a-zA-Z0-9][a-zA-Z0-9!#$&^_+.-]*)?$/;
+  if (!mainType || !typeSubtypePattern.test(mainType.trim())) {
     throw new Error(`Invalid MIME type format: ${mimeType}`);
+  }
+
+  // パラメータの検証（存在する場合）
+  if (params.length > 0) {
+    const paramPattern = /^\s*[a-zA-Z0-9-]+=?[a-zA-Z0-9-._~:/?#[\]@!$&'()*+,;=%]*$/;
+    for (const param of params) {
+      // 空のパラメータは無効
+      if (param.trim() === '') {
+        throw new Error(`Invalid MIME type format: ${mimeType}`);
+      }
+      if (!paramPattern.test(param)) {
+        throw new Error(`Invalid MIME type format: ${mimeType}`);
+      }
+    }
   }
 
   return { value: normalizedType } as ContentType;

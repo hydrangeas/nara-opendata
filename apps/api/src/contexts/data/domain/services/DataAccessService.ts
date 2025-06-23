@@ -9,6 +9,8 @@ import { isResourceAccessible } from '../value-objects/OpenDataResource';
  */
 export class DataAccessService {
   // デフォルトの最大ファイルサイズ（100MB）
+  // TODO: 将来的にプロジェクト固有の設定として外部化を検討
+  // その際は、コンストラクタインジェクションでの設定値受け取りを推奨
   private static readonly DEFAULT_MAX_FILE_SIZE = 100 * 1024 * 1024;
 
   /**
@@ -71,6 +73,8 @@ export class DataAccessService {
     // 拡張子を取得（大文字小文字を区別しない）
     const extension = path.split('.').pop()?.toLowerCase();
 
+    // TODO: 拡張子とMIMEタイプのマッピングの外部化を検討
+    // 将来的に設定ファイルや設定クラスから提供される可能性あり
     const extensionMap: Record<string, string> = {
       json: 'application/json',
       xml: 'application/xml',

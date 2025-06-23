@@ -33,6 +33,8 @@ export function createFilePath(path: string): FilePath {
     /\0/, // nullバイト
   ];
 
+  // TODO: パフォーマンスが問題になった場合、正規表現を結合して最適化を検討
+  // 現在は各パターンで個別にチェックすることで、どの種類の攻撃かを特定しやすくしている
   for (const pattern of traversalPatterns) {
     if (pattern.test(path)) {
       throw new PathTraversalException(path);
