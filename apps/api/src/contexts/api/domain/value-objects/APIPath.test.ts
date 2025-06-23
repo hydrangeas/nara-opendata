@@ -55,6 +55,20 @@ describe('APIPath', () => {
         expect(() => createAPIPath(path)).toThrow('Path traversal detected in API path');
       }
     });
+
+    it('パーセントエンコード文字列を許可する', () => {
+      // 日本語のパーセントエンコード
+      const path1 = createAPIPath('/api/%E3%83%87%E3%83%BC%E3%82%BF');
+      expect(getAPIPathValue(path1)).toBe('/api/%E3%83%87%E3%83%BC%E3%82%BF');
+
+      // スペースのエンコード
+      const path2 = createAPIPath('/api/hello%20world');
+      expect(getAPIPathValue(path2)).toBe('/api/hello%20world');
+
+      // 特殊文字のエンコード
+      const path3 = createAPIPath('/api/test%2Fpath');
+      expect(getAPIPathValue(path3)).toBe('/api/test%2Fpath');
+    });
   });
 
   describe('equalsAPIPath', () => {

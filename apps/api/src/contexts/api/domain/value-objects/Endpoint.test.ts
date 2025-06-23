@@ -33,6 +33,16 @@ describe('Endpoint', () => {
       expect(() => createEndpoint('')).toThrow('Endpoint path cannot be empty');
       expect(() => createEndpoint('  ')).toThrow('Endpoint path cannot be empty');
     });
+
+    it('マルチバイト文字を含むパスを処理できる', () => {
+      // Fastifyなどのフレームワークがデコード済みの文字列を渡す想定
+      const endpoint1 = createEndpoint('/api/データ');
+      expect(getEndpointPath(endpoint1)).toBe('/api/データ');
+
+      // パーセントエンコードされた文字列もそのまま保存（フレームワークがデコードしていない場合）
+      const endpoint2 = createEndpoint('/api/%E3%83%87%E3%83%BC%E3%82%BF');
+      expect(getEndpointPath(endpoint2)).toBe('/api/%E3%83%87%E3%83%BC%E3%82%BF');
+    });
   });
 
   describe('equalsEndpoint', () => {

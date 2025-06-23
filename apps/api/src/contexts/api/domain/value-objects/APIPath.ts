@@ -78,12 +78,11 @@ export function getPathSegments(apiPath: APIPath): string[] {
 export function extractPathParams(apiPath: APIPath, pattern: string): Record<string, string> {
   const pathSegments = getPathSegments(apiPath);
   const patternSegments = pattern.split('/').filter((s) => s.length > 0);
+  const params: Record<string, string> = {};
 
   if (pathSegments.length !== patternSegments.length) {
-    return {};
+    return params;
   }
-
-  const params: Record<string, string> = {};
 
   for (let i = 0; i < patternSegments.length; i++) {
     const patternSegment = patternSegments[i];
@@ -95,8 +94,8 @@ export function extractPathParams(apiPath: APIPath, pattern: string): Record<str
       if (paramMatch && paramMatch[1]) {
         params[paramMatch[1]] = pathSegment;
       } else if (patternSegment !== pathSegment) {
-        // パターンと一致しない場合は空のオブジェクトを返す
-        return {};
+        // パターンと一致しない場合はparamsを返す
+        return params;
       }
     }
   }
