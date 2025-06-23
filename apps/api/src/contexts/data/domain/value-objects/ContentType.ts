@@ -74,6 +74,13 @@ export function getExtensionForContentType(contentType: ContentType): string {
     'image/jpg': '.jpg',
     'application/vnd.api+json': '.json',
     'application/ld+json': '.json',
+    'text/csv': '.csv',
+    'application/vnd.ms-excel': '.xls',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
+    'application/zip': '.zip',
+    'application/gzip': '.gz',
+    'application/x-bzip2': '.bz2',
+    'application/x-xz': '.xz',
   };
 
   return extensionMap[mainType] || '';

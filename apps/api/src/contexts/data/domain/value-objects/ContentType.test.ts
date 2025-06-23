@@ -128,6 +128,13 @@ describe('ContentType', () => {
         { type: 'application/pdf', ext: '.pdf' },
         { type: 'image/png', ext: '.png' },
         { type: 'image/jpeg', ext: '.jpg' },
+        { type: 'text/csv', ext: '.csv' },
+        { type: 'application/vnd.ms-excel', ext: '.xls' },
+        { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', ext: '.xlsx' },
+        { type: 'application/zip', ext: '.zip' },
+        { type: 'application/gzip', ext: '.gz' },
+        { type: 'application/x-bzip2', ext: '.bz2' },
+        { type: 'application/x-xz', ext: '.xz' },
       ];
 
       for (const { type, ext } of mappings) {
