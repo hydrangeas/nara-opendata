@@ -1,0 +1,56 @@
+import { randomUUID } from 'crypto';
+
+/**
+ * ログIDを表すバリューオブジェクト
+ * UUIDv4形式の一意な識別子
+ */
+export interface ILogIdAttributes {
+  value: string;
+}
+
+export type LogId = ILogIdAttributes & { readonly brand: unique symbol };
+
+/**
+ * ログIDを作成する
+ */
+export function createLogId(value?: string): LogId {
+  if (value) {
+    // 既存のUUIDを使用する場合の検証
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(value)) {
+      throw new Error('Invalid UUID format');
+    }
+    return { value: value.toLowerCase() } as LogId;
+  }
+
+  // 新規生成
+  return { value: randomUUID() } as LogId;
+}
+
+/**
+ * LogIdから文字列値を取得する
+ */
+export function getLogIdValue(logId: LogId): string {
+  return logId.value;
+}
+
+/**
+ * LogIdの等価性を判定する
+ */
+export function equalsLogId(a: LogId, b: LogId): boolean {
+  return a.value === b.value;
+}
+
+/**
+ * LogIdのハッシュコードを生成する（Map/Setで使用）
+ */
+export function hashCodeLogId(logId: LogId): string {
+  return logId.value;
+}
+
+/**
+ * 新しいLogIdを生成する（ファクトリメソッド）
+ */
+export function generateLogId(): LogId {
+  return createLogId();
+}
