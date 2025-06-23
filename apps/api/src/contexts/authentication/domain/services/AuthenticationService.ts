@@ -82,28 +82,50 @@ export const AuthenticationService = {
   },
 
   /**
-   * トークンの有効期限を検証する
+   * トークンの時刻関連の有効性を包括的に検証する
+   * @returns 検証結果と理由
    */
-  isTokenExpired(payload: IJWTPayload): boolean {
+  validateTokenTiming(payload: IJWTPayload): {
+    isValid: boolean;
+    reason?: 'expired' | 'not_yet_valid' | 'missing_exp';
+    details?: {
+      exp?: number;
+      iat?: number;
+      now: number;
+    };
+  } {
+    const now = Math.floor(Date.now() / 1000);
+
+    // 有効期限の検証
     if (!payload.exp) {
-      return true; // 有効期限がない場合は期限切れとして扱う
+      return {
+        isValid: false,
+        reason: 'missing_exp',
+        details: { now },
+      };
     }
 
-    const now = Math.floor(Date.now() / 1000);
-    return payload.exp < now;
-  },
-
-  /**
-   * トークンの発行時刻を検証する（未来のトークンを拒否）
-   */
-  isTokenFromFuture(payload: IJWTPayload): boolean {
-    if (!payload.iat) {
-      return false; // 発行時刻がない場合は許可
+    if (payload.exp < now) {
+      return {
+        isValid: false,
+        reason: 'expired',
+        details: { exp: payload.exp, now },
+      };
     }
 
-    const now = Math.floor(Date.now() / 1000);
-    const clockSkew = 60; // 60秒の時刻ずれを許容
-    return payload.iat > now + clockSkew;
+    // 発行時刻の検証（未来のトークンを拒否）
+    if (payload.iat) {
+      const clockSkew = 60; // 60秒の時刻ずれを許容
+      if (payload.iat > now + clockSkew) {
+        return {
+          isValid: false,
+          reason: 'not_yet_valid',
+          details: { iat: payload.iat, now },
+        };
+      }
+    }
+
+    return { isValid: true };
   },
 
   /**

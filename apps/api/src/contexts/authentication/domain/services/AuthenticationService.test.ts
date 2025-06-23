@@ -131,13 +131,28 @@ describe('AuthenticationService', () => {
     });
   });
 
-  describe('isTokenExpired', () => {
+  describe('validateTokenTiming', () => {
     beforeEach(() => {
       vi.useFakeTimers();
     });
 
     afterEach(() => {
       vi.useRealTimers();
+    });
+
+    it('有効なトークンを検証する', () => {
+      const now = new Date('2024-01-01T12:00:00Z');
+      vi.setSystemTime(now);
+
+      const payload: IJWTPayload = {
+        sub: validUserId,
+        exp: Math.floor(now.getTime() / 1000) + 3600, // 1時間後に期限切れ
+        iat: Math.floor(now.getTime() / 1000) - 60, // 1分前に発行
+      };
+
+      const result = AuthenticationService.validateTokenTiming(payload);
+      expect(result.isValid).toBe(true);
+      expect(result.reason).toBeUndefined();
     });
 
     it('期限切れのトークンを検出する', () => {
@@ -149,37 +164,11 @@ describe('AuthenticationService', () => {
         exp: Math.floor(now.getTime() / 1000) - 1, // 1秒前に期限切れ
       };
 
-      expect(AuthenticationService.isTokenExpired(payload)).toBe(true);
-    });
-
-    it('有効なトークンを検出する', () => {
-      const now = new Date('2024-01-01T12:00:00Z');
-      vi.setSystemTime(now);
-
-      const payload: IJWTPayload = {
-        sub: validUserId,
-        exp: Math.floor(now.getTime() / 1000) + 3600, // 1時間後に期限切れ
-      };
-
-      expect(AuthenticationService.isTokenExpired(payload)).toBe(false);
-    });
-
-    it('expがない場合は期限切れとして扱う', () => {
-      const payload: IJWTPayload = {
-        sub: validUserId,
-      };
-
-      expect(AuthenticationService.isTokenExpired(payload)).toBe(true);
-    });
-  });
-
-  describe('isTokenFromFuture', () => {
-    beforeEach(() => {
-      vi.useFakeTimers();
-    });
-
-    afterEach(() => {
-      vi.useRealTimers();
+      const result = AuthenticationService.validateTokenTiming(payload);
+      expect(result.isValid).toBe(false);
+      expect(result.reason).toBe('expired');
+      expect(result.details?.exp).toBe(payload.exp);
+      expect(result.details?.now).toBe(Math.floor(now.getTime() / 1000));
     });
 
     it('未来のトークンを検出する', () => {
@@ -188,42 +177,58 @@ describe('AuthenticationService', () => {
 
       const payload: IJWTPayload = {
         sub: validUserId,
-        iat: Math.floor(now.getTime() / 1000) + 120, // 2分後に発行
+        exp: Math.floor(now.getTime() / 1000) + 3600,
+        iat: Math.floor(now.getTime() / 1000) + 120, // 2分後に発行（clockSkew 60秒を超える）
       };
 
-      expect(AuthenticationService.isTokenFromFuture(payload)).toBe(true);
+      const result = AuthenticationService.validateTokenTiming(payload);
+      expect(result.isValid).toBe(false);
+      expect(result.reason).toBe('not_yet_valid');
+      expect(result.details?.iat).toBe(payload.iat);
+      expect(result.details?.now).toBe(Math.floor(now.getTime() / 1000));
     });
 
-    it('現在または過去のトークンを許可する', () => {
+    it('有効期限がないトークンを無効と判定する', () => {
       const now = new Date('2024-01-01T12:00:00Z');
       vi.setSystemTime(now);
 
       const payload: IJWTPayload = {
         sub: validUserId,
-        iat: Math.floor(now.getTime() / 1000) - 60, // 1分前に発行
+        // exp がない
       };
 
-      expect(AuthenticationService.isTokenFromFuture(payload)).toBe(false);
+      const result = AuthenticationService.validateTokenTiming(payload);
+      expect(result.isValid).toBe(false);
+      expect(result.reason).toBe('missing_exp');
+      expect(result.details?.now).toBe(Math.floor(now.getTime() / 1000));
     });
 
-    it('時刻ずれの許容範囲内は許可する', () => {
+    it('発行時刻がなくても有効期限があれば有効と判定する', () => {
       const now = new Date('2024-01-01T12:00:00Z');
       vi.setSystemTime(now);
 
       const payload: IJWTPayload = {
         sub: validUserId,
-        iat: Math.floor(now.getTime() / 1000) + 30, // 30秒後に発行（許容範囲内）
+        exp: Math.floor(now.getTime() / 1000) + 3600,
+        // iat がない
       };
 
-      expect(AuthenticationService.isTokenFromFuture(payload)).toBe(false);
+      const result = AuthenticationService.validateTokenTiming(payload);
+      expect(result.isValid).toBe(true);
     });
 
-    it('iatがない場合は許可する', () => {
+    it('clockSkew内の未来のトークンは有効と判定する', () => {
+      const now = new Date('2024-01-01T12:00:00Z');
+      vi.setSystemTime(now);
+
       const payload: IJWTPayload = {
         sub: validUserId,
+        exp: Math.floor(now.getTime() / 1000) + 3600,
+        iat: Math.floor(now.getTime() / 1000) + 30, // 30秒後に発行（clockSkew 60秒以内）
       };
 
-      expect(AuthenticationService.isTokenFromFuture(payload)).toBe(false);
+      const result = AuthenticationService.validateTokenTiming(payload);
+      expect(result.isValid).toBe(true);
     });
   });
 
