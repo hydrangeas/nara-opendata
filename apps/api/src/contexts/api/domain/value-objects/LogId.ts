@@ -45,10 +45,3 @@ export function getLogIdValue(logId: LogId): string {
 export function equalsLogId(a: LogId, b: LogId): boolean {
   return a.value === b.value;
 }
-
-/**
- * 新しいLogIdを生成する（ファクトリメソッド）
- */
-export function generateLogId(): LogId {
-  return createLogId();
-}

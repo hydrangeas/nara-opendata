@@ -1,6 +1,6 @@
 import type { UserId } from '@nara-opendata/shared-kernel';
 import type { LogId, Endpoint } from '../value-objects';
-import { generateLogId, equalsLogId, getEndpointPath } from '../value-objects';
+import { createLogId, equalsLogId, getEndpointPath } from '../value-objects';
 
 /**
  * レート制限ログエンティティ
@@ -20,7 +20,7 @@ export class RateLimitLog implements IRateLimitLogAttributes {
   readonly requestedAt: Date;
 
   constructor(attributes: { id?: LogId; userId: UserId; endpoint: Endpoint; requestedAt?: Date }) {
-    this.id = attributes.id || generateLogId();
+    this.id = attributes.id || createLogId();
     this.userId = attributes.userId;
     this.endpoint = attributes.endpoint;
     this.requestedAt = attributes.requestedAt || new Date();

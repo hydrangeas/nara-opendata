@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createLogId, getLogIdValue, equalsLogId, generateLogId } from './LogId';
+import { createLogId, getLogIdValue, equalsLogId } from './LogId';
 
 describe('LogId', () => {
   describe('createLogId', () => {
@@ -54,21 +54,6 @@ describe('LogId', () => {
       const logId1 = createLogId('123e4567-e89b-42d3-a456-426614174000');
       const logId2 = createLogId('987e6543-e21b-42d3-a456-426614174000');
       expect(equalsLogId(logId1, logId2)).toBe(false);
-    });
-  });
-
-  describe('generateLogId', () => {
-    it('新しいLogIdを生成する', () => {
-      const logId1 = generateLogId();
-      const logId2 = generateLogId();
-
-      // 異なるIDが生成されることを確認
-      expect(equalsLogId(logId1, logId2)).toBe(false);
-
-      // 両方とも有効なUUID形式であることを確認
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
-      expect(uuidRegex.test(getLogIdValue(logId1))).toBe(true);
-      expect(uuidRegex.test(getLogIdValue(logId2))).toBe(true);
     });
   });
 });
