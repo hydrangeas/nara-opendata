@@ -8,7 +8,6 @@ import {
   getRateLimitWindowSeconds,
   getRateLimitSource,
   getRateLimitRequestsPerSecond,
-  isCustomRateLimit,
   equalsRateLimit,
   rateLimitToString,
 } from './RateLimit';
@@ -20,7 +19,6 @@ describe('RateLimit', () => {
       expect(getRateLimitValue(rateLimit)).toBe(60);
       expect(getRateLimitWindowSeconds(rateLimit)).toBe(60);
       expect(getRateLimitSource(rateLimit)).toBe(RateLimitSource.TIER1_DEFAULT);
-      expect(isCustomRateLimit(rateLimit)).toBe(false);
     });
 
     it('TIER2のデフォルトレート制限を作成できる', () => {
@@ -28,7 +26,6 @@ describe('RateLimit', () => {
       expect(getRateLimitValue(rateLimit)).toBe(120);
       expect(getRateLimitWindowSeconds(rateLimit)).toBe(60);
       expect(getRateLimitSource(rateLimit)).toBe(RateLimitSource.TIER2_DEFAULT);
-      expect(isCustomRateLimit(rateLimit)).toBe(false);
     });
 
     it('TIER3のデフォルトレート制限を作成できる', () => {
@@ -36,7 +33,6 @@ describe('RateLimit', () => {
       expect(getRateLimitValue(rateLimit)).toBe(300);
       expect(getRateLimitWindowSeconds(rateLimit)).toBe(60);
       expect(getRateLimitSource(rateLimit)).toBe(RateLimitSource.TIER3_DEFAULT);
-      expect(isCustomRateLimit(rateLimit)).toBe(false);
     });
   });
 
@@ -46,7 +42,6 @@ describe('RateLimit', () => {
       expect(getRateLimitValue(rateLimit)).toBe(100);
       expect(getRateLimitWindowSeconds(rateLimit)).toBe(60);
       expect(getRateLimitSource(rateLimit)).toBe(RateLimitSource.CUSTOM);
-      expect(isCustomRateLimit(rateLimit)).toBe(true);
     });
 
     it('負の制限値を拒否する', () => {

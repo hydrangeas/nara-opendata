@@ -106,13 +106,6 @@ export function getRateLimitRequestsPerSecond(rateLimit: RateLimit): number {
 }
 
 /**
- * カスタムレート制限かどうかを判定する
- */
-export function isCustomRateLimit(rateLimit: RateLimit): boolean {
-  return rateLimit.source === RateLimitSource.CUSTOM;
-}
-
-/**
  * レート制限の等価性を判定する
  */
 export function equalsRateLimit(a: RateLimit, b: RateLimit): boolean {

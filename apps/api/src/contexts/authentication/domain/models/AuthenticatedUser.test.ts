@@ -8,7 +8,6 @@ import {
   getRateLimitValue,
   getRateLimitWindowSeconds,
   getRateLimitSource,
-  isCustomRateLimit,
 } from './RateLimit';
 
 describe('AuthenticatedUser', () => {
@@ -52,7 +51,6 @@ describe('AuthenticatedUser', () => {
       expect(getRateLimitValue(user.rateLimit)).toBe(500);
       expect(getRateLimitWindowSeconds(user.rateLimit)).toBe(60);
       expect(getRateLimitSource(user.rateLimit)).toBe(RateLimitSource.CUSTOM);
-      expect(isCustomRateLimit(user.rateLimit)).toBe(true);
     });
   });
 

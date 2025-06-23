@@ -5,7 +5,6 @@ import {
   getRateLimitValue,
   getRateLimitWindowSeconds,
   getRateLimitSource,
-  isCustomRateLimit,
 } from '../models/RateLimit';
 
 describe('AuthenticationService', () => {
@@ -23,7 +22,6 @@ describe('AuthenticationService', () => {
       expect(getRateLimitValue(user.rateLimit)).toBe(60); // TIER1のデフォルト
       expect(getRateLimitWindowSeconds(user.rateLimit)).toBe(60);
       expect(getRateLimitSource(user.rateLimit)).toBe(RateLimitSource.TIER1_DEFAULT);
-      expect(isCustomRateLimit(user.rateLimit)).toBe(false);
     });
 
     it('ティア情報を含むペイロードからユーザーを作成できる', () => {
@@ -40,7 +38,6 @@ describe('AuthenticationService', () => {
       expect(getRateLimitValue(user.rateLimit)).toBe(120); // TIER2のデフォルト
       expect(getRateLimitWindowSeconds(user.rateLimit)).toBe(60);
       expect(getRateLimitSource(user.rateLimit)).toBe(RateLimitSource.TIER2_DEFAULT);
-      expect(isCustomRateLimit(user.rateLimit)).toBe(false);
     });
 
     it('カスタムレート制限を含むペイロードからユーザーを作成できる', () => {
@@ -61,7 +58,6 @@ describe('AuthenticationService', () => {
       expect(getRateLimitValue(user.rateLimit)).toBe(500);
       expect(getRateLimitWindowSeconds(user.rateLimit)).toBe(60);
       expect(getRateLimitSource(user.rateLimit)).toBe(RateLimitSource.CUSTOM);
-      expect(isCustomRateLimit(user.rateLimit)).toBe(true);
     });
 
     it('無効なユーザーIDの場合エラーになる', () => {
