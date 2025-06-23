@@ -18,6 +18,12 @@ describe('FileSize', () => {
       }
     });
 
+    it('無限大やNaNを拒否する', () => {
+      expect(() => createFileSize(Infinity)).toThrow('File size must be a finite number');
+      expect(() => createFileSize(-Infinity)).toThrow('File size must be a finite number');
+      expect(() => createFileSize(NaN)).toThrow('File size must be a finite number');
+    });
+
     it('負の値を拒否する', () => {
       expect(() => createFileSize(-1)).toThrow('File size cannot be negative');
       expect(() => createFileSize(-100)).toThrow('File size cannot be negative');
@@ -32,6 +38,15 @@ describe('FileSize', () => {
       expect(() => createFileSize(Number.MAX_SAFE_INTEGER + 1)).toThrow(
         'File size exceeds maximum safe integer',
       );
+      // MAX_SAFE_INTEGERを大幅に超える値
+      expect(() => createFileSize(Number.MAX_SAFE_INTEGER * 2)).toThrow(
+        'File size exceeds maximum safe integer',
+      );
+    });
+
+    it('Number.MAX_SAFE_INTEGERはちょうど受け入れる', () => {
+      const fileSize = createFileSize(Number.MAX_SAFE_INTEGER);
+      expect(getFileSizeBytes(fileSize)).toBe(Number.MAX_SAFE_INTEGER);
     });
   });
 

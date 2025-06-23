@@ -11,6 +11,11 @@ export type FileSize = IFileSizeAttributes & { readonly brand: unique symbol };
  * ファイルサイズを作成する
  */
 export function createFileSize(bytes: number): FileSize {
+  // 数値チェック
+  if (!Number.isFinite(bytes)) {
+    throw new Error('File size must be a finite number');
+  }
+
   // 負の値チェック
   if (bytes < 0) {
     throw new Error('File size cannot be negative');
@@ -21,9 +26,13 @@ export function createFileSize(bytes: number): FileSize {
     throw new Error('File size must be an integer');
   }
 
-  // 最大値チェック（JavaScriptの安全な整数の範囲内）
-  if (bytes > Number.MAX_SAFE_INTEGER) {
-    throw new Error('File size exceeds maximum safe integer');
+  // 安全な整数範囲チェック
+  // Number.isSafeIntegerは、値が安全な整数範囲内かつ整数であることを保証
+  if (!Number.isSafeInteger(bytes)) {
+    throw new Error(
+      `File size exceeds maximum safe integer (${Number.MAX_SAFE_INTEGER}). ` +
+        'Consider using BigInt for larger values.',
+    );
   }
 
   return { bytes } as FileSize;
