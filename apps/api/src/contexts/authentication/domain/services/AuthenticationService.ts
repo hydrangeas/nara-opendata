@@ -85,6 +85,27 @@ export interface IRateLimitState {
 }
 
 /**
+ * 認証成功時の結果
+ */
+export interface IAuthenticationSuccess {
+  success: true;
+  user: AuthenticatedUser;
+}
+
+/**
+ * 認証失敗時の結果
+ */
+export interface IAuthenticationFailure {
+  success: false;
+  error: IAuthenticationError;
+}
+
+/**
+ * 認証処理の結果
+ */
+export type AuthenticationResult = IAuthenticationSuccess | IAuthenticationFailure;
+
+/**
  * 文字列からTierLevelへの安全な変換（判別共用体を使用）
  * @param tierString - 変換する文字列（case insensitive）
  * @returns 変換結果と警告情報
@@ -129,6 +150,24 @@ function getErrorMessage(reason: AuthenticationErrorReason): string {
 }
 
 /**
+ * 認証結果が成功かどうかを判定する型ガード
+ */
+export function isAuthenticationSuccess(
+  result: AuthenticationResult,
+): result is IAuthenticationSuccess {
+  return result.success === true;
+}
+
+/**
+ * 認証結果が失敗かどうかを判定する型ガード
+ */
+export function isAuthenticationFailure(
+  result: AuthenticationResult,
+): result is IAuthenticationFailure {
+  return result.success === false;
+}
+
+/**
  * 認証に関するドメインサービス
  */
 export const AuthenticationService = {
@@ -136,9 +175,7 @@ export const AuthenticationService = {
    * JWTペイロードから検証済みのAuthenticatedUserを作成する
    * @returns 成功時はAuthenticatedUser、失敗時はエラー情報を含むResult型
    */
-  createAuthenticatedUserFromJWT(
-    payload: IJWTPayload,
-  ): { success: true; user: AuthenticatedUser } | { success: false; error: IAuthenticationError } {
+  createAuthenticatedUserFromJWT(payload: IJWTPayload): AuthenticationResult {
     // まずトークンの時刻検証を実行
     const timingValidation = this.validateTokenTiming(payload);
     if (!timingValidation.isValid) {
