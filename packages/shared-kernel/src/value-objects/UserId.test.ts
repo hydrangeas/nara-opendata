@@ -25,6 +25,19 @@ describe('UserId', () => {
       );
     });
 
+    it('非文字列型の値を拒否する', () => {
+      // @ts-expect-error - テストのため意図的に型エラーを無視
+      expect(() => createUserId(123)).toThrow('UserId must be a string');
+      // @ts-expect-error - テストのため意図的に型エラーを無視
+      expect(() => createUserId(null)).toThrow('UserId must be a string');
+      // @ts-expect-error - テストのため意図的に型エラーを無視
+      expect(() => createUserId(undefined)).toThrow('UserId must be a string');
+      // @ts-expect-error - テストのため意図的に型エラーを無視
+      expect(() => createUserId({})).toThrow('UserId must be a string');
+      // @ts-expect-error - テストのため意図的に型エラーを無視
+      expect(() => createUserId([])).toThrow('UserId must be a string');
+    });
+
     it('大文字小文字を区別せず受け入れ、小文字に正規化する', () => {
       const upperCase = '123E4567-E89B-12D3-A456-426614174000';
       const lowerCase = '123e4567-e89b-12d3-a456-426614174000';

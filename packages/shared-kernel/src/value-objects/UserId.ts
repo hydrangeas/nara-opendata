@@ -8,6 +8,11 @@ export type UserId = string & { readonly brand: unique symbol };
  * ユーザーIDを作成する
  */
 export function createUserId(value: string): UserId {
+  // 型チェック（実行時のバリデーション）
+  if (typeof value !== 'string') {
+    throw new Error('UserId must be a string');
+  }
+
   if (!value || value.trim() === '') {
     throw new Error('UserId cannot be empty');
   }

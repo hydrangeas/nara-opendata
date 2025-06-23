@@ -19,6 +19,28 @@ describe('UserTier', () => {
       expect(getUserTierLevel(tier2)).toBe(TierLevel.TIER2);
       expect(getUserTierLevel(tier3)).toBe(TierLevel.TIER3);
     });
+
+    it('無効な値を拒否する', () => {
+      // 数値を渡した場合
+      expect(() => createUserTier(1 as any)).toThrow('Invalid tier level: 1');
+      expect(() => createUserTier(2 as any)).toThrow('Invalid tier level: 2');
+      expect(() => createUserTier(3 as any)).toThrow('Invalid tier level: 3');
+      expect(() => createUserTier(4 as any)).toThrow('Invalid tier level: 4');
+
+      // 不正な文字列を渡した場合
+      expect(() => createUserTier('TIER4' as any)).toThrow('Invalid tier level: TIER4');
+      expect(() => createUserTier('tier1' as any)).toThrow('Invalid tier level: tier1');
+      expect(() => createUserTier('INVALID' as any)).toThrow('Invalid tier level: INVALID');
+      expect(() => createUserTier('' as any)).toThrow('Invalid tier level: ');
+
+      // null/undefinedを渡した場合
+      expect(() => createUserTier(null as any)).toThrow('Invalid tier level: null');
+      expect(() => createUserTier(undefined as any)).toThrow('Invalid tier level: undefined');
+
+      // オブジェクトを渡した場合
+      expect(() => createUserTier({} as any)).toThrow('Invalid tier level: [object Object]');
+      expect(() => createUserTier([] as any)).toThrow('Invalid tier level: ');
+    });
   });
 
   describe('getUserTierDefaultRateLimit', () => {

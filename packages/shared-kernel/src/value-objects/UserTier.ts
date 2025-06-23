@@ -25,6 +25,10 @@ export interface IRateLimitConfig {
  * UserTierを作成する
  */
 export function createUserTier(level: TierLevel): UserTier {
+  // 実行時のバリデーション
+  if (!Object.values(TierLevel).includes(level)) {
+    throw new Error(`Invalid tier level: ${level}`);
+  }
   return level as UserTier;
 }
 
