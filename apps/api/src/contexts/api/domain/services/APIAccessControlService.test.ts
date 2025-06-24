@@ -5,10 +5,10 @@ import {
   TierLevel,
   TIER_DEFAULT_RATE_LIMITS,
 } from '@nara-opendata/shared-kernel';
-import type { UserId, UserTier } from '@nara-opendata/shared-kernel';
+import type { UserId } from '@nara-opendata/shared-kernel';
 import type { IRateLimitRepository } from '../repositories';
 import { RateLimitLog } from '../entities/RateLimitLog';
-import { createEndpoint } from '../value-objects';
+import { createEndpoint, createAPIUser, type APIUser } from '../value-objects';
 import { APIAccessControlService } from './APIAccessControlService';
 import { RateLimitException } from '../exceptions/RateLimitException';
 
@@ -16,7 +16,7 @@ describe('APIAccessControlService', () => {
   let service: APIAccessControlService;
   let mockRepository: IRateLimitRepository;
   let userId: UserId;
-  let userTier: UserTier;
+  let apiUser: APIUser;
 
   beforeEach(() => {
     mockRepository = {
@@ -27,7 +27,7 @@ describe('APIAccessControlService', () => {
     };
     service = new APIAccessControlService(mockRepository);
     userId = createUserId('550e8400-e29b-41d4-a716-446655440000');
-    userTier = createUserTier(TierLevel.TIER1);
+    apiUser = createAPIUser(userId, createUserTier(TierLevel.TIER1));
   });
 
   describe('checkRateLimit', () => {
@@ -36,7 +36,7 @@ describe('APIAccessControlService', () => {
     it('レート制限内の場合、ログを保存する', async () => {
       vi.mocked(mockRepository.countByUserIdWithinWindow).mockResolvedValue(10);
 
-      await service.checkRateLimit(userId, userTier, endpoint);
+      await service.checkRateLimit(apiUser, endpoint);
 
       expect(mockRepository.countByUserIdWithinWindow).toHaveBeenCalledWith(
         userId,
@@ -54,9 +54,7 @@ describe('APIAccessControlService', () => {
       vi.mocked(mockRepository.countByUserIdWithinWindow).mockResolvedValue(rateLimit.limit);
       vi.mocked(mockRepository.findRecentByUserId).mockResolvedValue([]);
 
-      await expect(service.checkRateLimit(userId, userTier, endpoint)).rejects.toThrow(
-        RateLimitException,
-      );
+      await expect(service.checkRateLimit(apiUser, endpoint)).rejects.toThrow(RateLimitException);
       expect(mockRepository.save).not.toHaveBeenCalled();
     });
 
@@ -75,7 +73,7 @@ describe('APIAccessControlService', () => {
       vi.mocked(mockRepository.findRecentByUserId).mockResolvedValue([recentLog]);
 
       try {
-        await service.checkRateLimit(userId, userTier, endpoint);
+        await service.checkRateLimit(apiUser, endpoint);
         expect.fail('Should throw RateLimitException');
       } catch (error) {
         expect(error).toBeInstanceOf(RateLimitException);
@@ -88,14 +86,12 @@ describe('APIAccessControlService', () => {
     it('各ティアに応じた異なるレート制限を適用する', async () => {
       // TIER2ユーザー
       const tier2UserId = createUserId('123e4567-e89b-12d3-a456-426614174000');
-      const tier2UserTier = createUserTier(TierLevel.TIER2);
+      const tier2ApiUser = createAPIUser(tier2UserId, createUserTier(TierLevel.TIER2));
 
       vi.mocked(mockRepository.countByUserIdWithinWindow).mockResolvedValue(100);
 
       // TIER2は120リクエストまで許可されるのでエラーにならない
-      await expect(
-        service.checkRateLimit(tier2UserId, tier2UserTier, endpoint),
-      ).resolves.not.toThrow();
+      await expect(service.checkRateLimit(tier2ApiUser, endpoint)).resolves.not.toThrow();
 
       expect(mockRepository.countByUserIdWithinWindow).toHaveBeenCalledWith(
         tier2UserId,
@@ -106,41 +102,41 @@ describe('APIAccessControlService', () => {
 
   describe('validateTierAccess', () => {
     it('同じティアレベルでアクセス可能', () => {
-      const userTier = createUserTier(TierLevel.TIER2);
-      expect(service.validateTierAccess(userTier, TierLevel.TIER2)).toBe(true);
+      const tier2User = createAPIUser(userId, createUserTier(TierLevel.TIER2));
+      expect(service.validateTierAccess(tier2User, TierLevel.TIER2)).toBe(true);
     });
 
     it('より高いティアレベルでアクセス可能', () => {
-      const userTier = createUserTier(TierLevel.TIER3);
-      expect(service.validateTierAccess(userTier, TierLevel.TIER1)).toBe(true);
-      expect(service.validateTierAccess(userTier, TierLevel.TIER2)).toBe(true);
+      const tier3User = createAPIUser(userId, createUserTier(TierLevel.TIER3));
+      expect(service.validateTierAccess(tier3User, TierLevel.TIER1)).toBe(true);
+      expect(service.validateTierAccess(tier3User, TierLevel.TIER2)).toBe(true);
     });
 
     it('より低いティアレベルではアクセス不可', () => {
-      const userTier = createUserTier(TierLevel.TIER1);
-      expect(service.validateTierAccess(userTier, TierLevel.TIER2)).toBe(false);
-      expect(service.validateTierAccess(userTier, TierLevel.TIER3)).toBe(false);
+      const tier1User = createAPIUser(userId, createUserTier(TierLevel.TIER1));
+      expect(service.validateTierAccess(tier1User, TierLevel.TIER2)).toBe(false);
+      expect(service.validateTierAccess(tier1User, TierLevel.TIER3)).toBe(false);
     });
 
     it('すべてのティアレベルの組み合わせが正しく動作する', () => {
-      const tier1 = createUserTier(TierLevel.TIER1);
-      const tier2 = createUserTier(TierLevel.TIER2);
-      const tier3 = createUserTier(TierLevel.TIER3);
+      const tier1User = createAPIUser(userId, createUserTier(TierLevel.TIER1));
+      const tier2User = createAPIUser(userId, createUserTier(TierLevel.TIER2));
+      const tier3User = createAPIUser(userId, createUserTier(TierLevel.TIER3));
 
       // TIER1ユーザー
-      expect(service.validateTierAccess(tier1, TierLevel.TIER1)).toBe(true);
-      expect(service.validateTierAccess(tier1, TierLevel.TIER2)).toBe(false);
-      expect(service.validateTierAccess(tier1, TierLevel.TIER3)).toBe(false);
+      expect(service.validateTierAccess(tier1User, TierLevel.TIER1)).toBe(true);
+      expect(service.validateTierAccess(tier1User, TierLevel.TIER2)).toBe(false);
+      expect(service.validateTierAccess(tier1User, TierLevel.TIER3)).toBe(false);
 
       // TIER2ユーザー
-      expect(service.validateTierAccess(tier2, TierLevel.TIER1)).toBe(true);
-      expect(service.validateTierAccess(tier2, TierLevel.TIER2)).toBe(true);
-      expect(service.validateTierAccess(tier2, TierLevel.TIER3)).toBe(false);
+      expect(service.validateTierAccess(tier2User, TierLevel.TIER1)).toBe(true);
+      expect(service.validateTierAccess(tier2User, TierLevel.TIER2)).toBe(true);
+      expect(service.validateTierAccess(tier2User, TierLevel.TIER3)).toBe(false);
 
       // TIER3ユーザー
-      expect(service.validateTierAccess(tier3, TierLevel.TIER1)).toBe(true);
-      expect(service.validateTierAccess(tier3, TierLevel.TIER2)).toBe(true);
-      expect(service.validateTierAccess(tier3, TierLevel.TIER3)).toBe(true);
+      expect(service.validateTierAccess(tier3User, TierLevel.TIER1)).toBe(true);
+      expect(service.validateTierAccess(tier3User, TierLevel.TIER2)).toBe(true);
+      expect(service.validateTierAccess(tier3User, TierLevel.TIER3)).toBe(true);
     });
   });
 });

@@ -1,4 +1,4 @@
-import type { UserId, UserTier, TierLevel } from '@nara-opendata/shared-kernel';
+import type { TierLevel } from '@nara-opendata/shared-kernel';
 import {
   getUserTierLevel,
   getTierHierarchy,
@@ -7,7 +7,7 @@ import {
 import type { IRateLimitRepository } from '../repositories';
 import { RateLimitException } from '../exceptions/RateLimitException';
 import { RateLimitLog } from '../entities/RateLimitLog';
-import { createEndpoint } from '../value-objects';
+import { createEndpoint, type APIUser, getAPIUserId, getAPIUserTier } from '../value-objects';
 
 /**
  * APIアクセス制御のドメインサービス
@@ -18,12 +18,13 @@ export class APIAccessControlService {
 
   /**
    * ユーザーのレート制限をチェックする
-   * @param userId ユーザーID
-   * @param userTier ユーザーティア
+   * @param apiUser APIユーザー
    * @param endpoint アクセスしようとしているエンドポイント
    * @throws {RateLimitException} レート制限を超えている場合
    */
-  async checkRateLimit(userId: UserId, userTier: UserTier, endpoint: string): Promise<void> {
+  async checkRateLimit(apiUser: APIUser, endpoint: string): Promise<void> {
+    const userId = getAPIUserId(apiUser);
+    const userTier = getAPIUserTier(apiUser);
     const userTierLevel = getUserTierLevel(userTier);
     const rateLimit = TIER_DEFAULT_RATE_LIMITS[userTierLevel];
 
@@ -64,11 +65,12 @@ export class APIAccessControlService {
 
   /**
    * ユーザーティアが要求されるティア以上かを検証する
-   * @param userTier ユーザーのティア
+   * @param apiUser APIユーザー
    * @param requiredTier 必要なティアレベル
    * @returns アクセス可能な場合true
    */
-  validateTierAccess(userTier: UserTier, requiredTier: TierLevel): boolean {
+  validateTierAccess(apiUser: APIUser, requiredTier: TierLevel): boolean {
+    const userTier = getAPIUserTier(apiUser);
     const userLevel = getUserTierLevel(userTier);
 
     // 共有カーネルの関数を使用してティア階層を比較
