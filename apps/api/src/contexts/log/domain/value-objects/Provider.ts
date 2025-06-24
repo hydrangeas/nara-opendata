@@ -60,7 +60,7 @@ const PROVIDER_DISPLAY_NAMES: Record<ProviderType, string> = {
   [ProviderType.GOOGLE]: 'Google',
   [ProviderType.GITHUB]: 'GitHub',
   [ProviderType.EMAIL]: 'Email',
-} as const;
+} satisfies Record<ProviderType, string>;
 
 /**
  * プロバイダーの表示名を取得する
@@ -70,20 +70,17 @@ export function getProviderDisplayName(provider: Provider): string {
 }
 
 /**
- * 文字列->プロバイダータイプ変換マップ
- */
-const PROVIDER_TYPE_MAP: Record<string, ProviderType> = {
-  GOOGLE: ProviderType.GOOGLE,
-  GITHUB: ProviderType.GITHUB,
-  EMAIL: ProviderType.EMAIL,
-} as const;
-
-/**
  * 文字列からプロバイダータイプに変換する（外部連携用）
+ *
+ * この関数は外部からの入力を処理するため、
+ * あらかじめすべてのケースを定義することは困難です。
+ * そのため、enum値との直接比較で実装します。
  */
 export function parseProviderType(value: string): ProviderType {
   const normalizedValue = value.trim().toUpperCase();
-  const providerType = PROVIDER_TYPE_MAP[normalizedValue];
+
+  // ProviderTypeのすべての値をチェック
+  const providerType = Object.values(ProviderType).find((type) => type === normalizedValue);
 
   if (!providerType) {
     throw new Error(`Unknown provider type: ${value}`);
