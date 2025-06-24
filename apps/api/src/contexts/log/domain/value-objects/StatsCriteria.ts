@@ -1,4 +1,5 @@
 import type { TimeRange } from './TimeRange';
+import { equalsTimeRange } from './TimeRange';
 
 /**
  * 統計条件属性
@@ -70,10 +71,7 @@ export function getStatsCriteriaMetrics(statsCriteria: StatsCriteria): string[] 
  */
 export function equalsStatsCriteria(a: StatsCriteria, b: StatsCriteria): boolean {
   // TimeRangeの比較
-  if (
-    a.timeRange.start.getTime() !== b.timeRange.start.getTime() ||
-    a.timeRange.end.getTime() !== b.timeRange.end.getTime()
-  ) {
+  if (!equalsTimeRange(a.timeRange, b.timeRange)) {
     return false;
   }
 
