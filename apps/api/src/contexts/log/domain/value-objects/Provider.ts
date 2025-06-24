@@ -88,24 +88,3 @@ export function parseProviderType(value: string): ProviderType {
 
   return providerType;
 }
-
-/**
- * Googleプロバイダーを作成する（便利関数）
- */
-export function createGoogleProvider(): Provider {
-  return createProvider(ProviderType.GOOGLE);
-}
-
-/**
- * GitHubプロバイダーを作成する（便利関数）
- */
-export function createGitHubProvider(): Provider {
-  return createProvider(ProviderType.GITHUB);
-}
-
-/**
- * Emailプロバイダーを作成する（便利関数）
- */
-export function createEmailProvider(): Provider {
-  return createProvider(ProviderType.EMAIL);
-}

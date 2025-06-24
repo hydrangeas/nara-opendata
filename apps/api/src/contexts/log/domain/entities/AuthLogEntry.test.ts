@@ -5,8 +5,8 @@ import {
   AuthEventType,
   createSuccessAuthResult,
   createFailureAuthResult,
-  createGoogleProvider,
-  createGitHubProvider,
+  createProvider,
+  ProviderType,
   createIPAddress,
   createUserAgent,
   createLogId,
@@ -29,7 +29,7 @@ import {
 describe('AuthLogEntry', () => {
   const userId = createUserId('550e8400-e29b-41d4-a716-446655440000');
   const event = createAuthEvent(AuthEventType.LOGIN);
-  const provider = createGoogleProvider();
+  const provider = createProvider(ProviderType.GOOGLE);
   const ipAddress = createIPAddress('192.168.1.1');
   const userAgent = createUserAgent('Mozilla/5.0 Chrome/96.0');
 
@@ -131,7 +131,7 @@ describe('AuthLogEntry', () => {
         id,
         userId: createUserId('999e8400-e29b-41d4-a716-446655440000'),
         event: createAuthEvent(AuthEventType.LOGOUT),
-        provider: createGitHubProvider(),
+        provider: createProvider(ProviderType.GITHUB),
         ipAddress: createIPAddress('10.0.0.1'),
         userAgent: createUserAgent('Firefox/95.0'),
         timestamp: new Date('2024-01-02'),

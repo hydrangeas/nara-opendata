@@ -6,9 +6,6 @@ import {
   equalsProvider,
   getProviderDisplayName,
   parseProviderType,
-  createGoogleProvider,
-  createGitHubProvider,
-  createEmailProvider,
 } from './Provider';
 
 describe('Provider', () => {
@@ -85,33 +82,13 @@ describe('Provider', () => {
     });
   });
 
-  describe('便利関数', () => {
-    it('createGoogleProviderでGoogleプロバイダーを作成できる', () => {
-      const provider = createGoogleProvider();
-      expect(getProviderType(provider)).toBe(ProviderType.GOOGLE);
-      expect(getProviderDisplayName(provider)).toBe('Google');
-    });
-
-    it('createGitHubProviderでGitHubプロバイダーを作成できる', () => {
-      const provider = createGitHubProvider();
-      expect(getProviderType(provider)).toBe(ProviderType.GITHUB);
-      expect(getProviderDisplayName(provider)).toBe('GitHub');
-    });
-
-    it('createEmailProviderでEmailプロバイダーを作成できる', () => {
-      const provider = createEmailProvider();
-      expect(getProviderType(provider)).toBe(ProviderType.EMAIL);
-      expect(getProviderDisplayName(provider)).toBe('Email');
-    });
-  });
-
   describe('ユースケース', () => {
     it('認証ログエントリでプロバイダー情報を記録できる', () => {
       // 各種プロバイダーでログイン
       const authLogs = [
-        { provider: createGoogleProvider(), timestamp: new Date() },
-        { provider: createGitHubProvider(), timestamp: new Date() },
-        { provider: createEmailProvider(), timestamp: new Date() },
+        { provider: createProvider(ProviderType.GOOGLE), timestamp: new Date() },
+        { provider: createProvider(ProviderType.GITHUB), timestamp: new Date() },
+        { provider: createProvider(ProviderType.EMAIL), timestamp: new Date() },
       ];
 
       // プロバイダー別にグループ化
