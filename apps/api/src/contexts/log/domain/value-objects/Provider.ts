@@ -54,43 +54,42 @@ export function equalsProvider(a: Provider, b: Provider): boolean {
 }
 
 /**
+ * プロバイダー表示名マップ
+ */
+const PROVIDER_DISPLAY_NAMES: Record<ProviderType, string> = {
+  [ProviderType.GOOGLE]: 'Google',
+  [ProviderType.GITHUB]: 'GitHub',
+  [ProviderType.EMAIL]: 'Email',
+} as const;
+
+/**
  * プロバイダーの表示名を取得する
  */
 export function getProviderDisplayName(provider: Provider): string {
-  switch (provider.type) {
-    case ProviderType.GOOGLE:
-      return 'Google';
-    case ProviderType.GITHUB:
-      return 'GitHub';
-    case ProviderType.EMAIL:
-      return 'Email';
-    default: {
-      // 型の網羅性チェック
-      const _exhaustiveCheck: never = provider.type;
-      return _exhaustiveCheck;
-    }
-  }
+  return PROVIDER_DISPLAY_NAMES[provider.type];
 }
+
+/**
+ * 文字列->プロバイダータイプ変換マップ
+ */
+const PROVIDER_TYPE_MAP: Record<string, ProviderType> = {
+  GOOGLE: ProviderType.GOOGLE,
+  GITHUB: ProviderType.GITHUB,
+  EMAIL: ProviderType.EMAIL,
+} as const;
 
 /**
  * 文字列からプロバイダータイプに変換する（外部連携用）
  */
 export function parseProviderType(value: string): ProviderType {
   const normalizedValue = value.trim().toUpperCase();
+  const providerType = PROVIDER_TYPE_MAP[normalizedValue];
 
-  switch (normalizedValue) {
-    case 'GOOGLE':
-    case ProviderType.GOOGLE:
-      return ProviderType.GOOGLE;
-    case 'GITHUB':
-    case ProviderType.GITHUB:
-      return ProviderType.GITHUB;
-    case 'EMAIL':
-    case ProviderType.EMAIL:
-      return ProviderType.EMAIL;
-    default:
-      throw new Error(`Unknown provider type: ${value}`);
+  if (!providerType) {
+    throw new Error(`Unknown provider type: ${value}`);
   }
+
+  return providerType;
 }
 
 /**
