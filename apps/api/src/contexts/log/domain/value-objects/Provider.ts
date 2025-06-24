@@ -77,13 +77,14 @@ export function getProviderDisplayName(provider: Provider): string {
  * そのため、enum値との直接比較で実装します。
  */
 export function parseProviderType(value: string): ProviderType {
-  const normalizedValue = value.trim().toUpperCase();
+  const trimmedValue = value.trim();
+  const normalizedValue = trimmedValue.toUpperCase();
 
   // ProviderTypeのすべての値をチェック
   const providerType = Object.values(ProviderType).find((type) => type === normalizedValue);
 
   if (!providerType) {
-    throw new Error(`Unknown provider type: ${value}`);
+    throw new Error(`Unknown provider type: ${trimmedValue}`);
   }
 
   return providerType;
