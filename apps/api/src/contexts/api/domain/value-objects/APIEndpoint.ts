@@ -1,5 +1,6 @@
-import { TierLevel, type UserTier } from '@nara-opendata/shared-kernel';
-import { getUserTierLevel } from '@nara-opendata/shared-kernel';
+import type { TierLevel } from '@nara-opendata/shared-kernel';
+import { type UserTier } from '@nara-opendata/shared-kernel';
+import { getUserTierLevel, getTierHierarchy } from '@nara-opendata/shared-kernel';
 import type { APIPath } from './APIPath';
 import { equalsAPIPath } from './APIPath';
 
@@ -48,15 +49,8 @@ export function validateAccess(endpoint: APIEndpoint, userTier: UserTier): boole
   const userLevel = getUserTierLevel(userTier);
   const requiredLevel = endpoint.requiredTier;
 
-  // ティアレベルの序列を定義（高い方が権限が強い）
-  const tierOrder: Record<TierLevel, number> = {
-    [TierLevel.TIER1]: 1,
-    [TierLevel.TIER2]: 2,
-    [TierLevel.TIER3]: 3,
-  };
-
-  // ユーザーのティアが必要なティア以上であればアクセス可能
-  return tierOrder[userLevel] >= tierOrder[requiredLevel];
+  // 共有カーネルの関数を使用してティア階層を比較
+  return getTierHierarchy(userLevel) >= getTierHierarchy(requiredLevel);
 }
 
 /**

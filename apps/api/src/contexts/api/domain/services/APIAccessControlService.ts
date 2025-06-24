@@ -1,8 +1,8 @@
-import type { UserId, UserTier } from '@nara-opendata/shared-kernel';
+import type { UserId, UserTier, TierLevel } from '@nara-opendata/shared-kernel';
 import {
   getUserTierLevel,
+  getTierHierarchy,
   TIER_DEFAULT_RATE_LIMITS,
-  TierLevel,
 } from '@nara-opendata/shared-kernel';
 import type { IRateLimitRepository } from '../repositories';
 import { RateLimitException } from '../exceptions/RateLimitException';
@@ -71,13 +71,7 @@ export class APIAccessControlService {
   validateTierAccess(userTier: UserTier, requiredTier: TierLevel): boolean {
     const userLevel = getUserTierLevel(userTier);
 
-    // ティアレベルの序列を定義（高い方が権限が強い）
-    const tierOrder: Record<TierLevel, number> = {
-      [TierLevel.TIER1]: 1,
-      [TierLevel.TIER2]: 2,
-      [TierLevel.TIER3]: 3,
-    };
-
-    return tierOrder[userLevel] >= tierOrder[requiredTier];
+    // 共有カーネルの関数を使用してティア階層を比較
+    return getTierHierarchy(userLevel) >= getTierHierarchy(requiredTier);
   }
 }

@@ -54,3 +54,22 @@ export function equalsUserTier(a: UserTier, b: UserTier): boolean {
 export function userTierToString(tier: UserTier): string {
   return tier as string;
 }
+
+/**
+ * ティアレベルの階層を数値で取得する（高いほど権限が強い）
+ * @param tier ティアレベル
+ * @returns 階層を表す数値（TIER1=1, TIER2=2, TIER3=3）
+ */
+export function getTierHierarchy(tier: TierLevel): number {
+  switch (tier) {
+    case TierLevel.TIER1:
+      return 1;
+    case TierLevel.TIER2:
+      return 2;
+    case TierLevel.TIER3:
+      return 3;
+    default:
+      // 型システムにより到達不可能だが、念のため
+      throw new Error(`Unknown tier level: ${tier}`);
+  }
+}
