@@ -4,7 +4,6 @@ import {
   createRequestId,
   getRequestIdValue,
   equalsRequestId,
-  hashCodeRequestId,
 } from './RequestId';
 
 describe('RequestId', () => {
@@ -67,27 +66,6 @@ describe('RequestId', () => {
       const generated = generateRequestId();
       const created = createRequestId(getRequestIdValue(generated));
       expect(equalsRequestId(generated, created)).toBe(true);
-    });
-  });
-
-  describe('hashCodeRequestId', () => {
-    it('同じ値は同じハッシュコードを返す', () => {
-      const id1 = createRequestId('req-123');
-      const id2 = createRequestId('req-123');
-      expect(hashCodeRequestId(id1)).toBe(hashCodeRequestId(id2));
-    });
-
-    it('異なる値は異なるハッシュコードを返す', () => {
-      const id1 = createRequestId('req-123');
-      const id2 = createRequestId('req-456');
-      expect(hashCodeRequestId(id1)).not.toBe(hashCodeRequestId(id2));
-    });
-
-    it('ハッシュコードは数値を返す', () => {
-      const requestId = createRequestId('test-request-id');
-      const hashCode = hashCodeRequestId(requestId);
-      expect(typeof hashCode).toBe('number');
-      expect(Number.isInteger(hashCode)).toBe(true);
     });
   });
 

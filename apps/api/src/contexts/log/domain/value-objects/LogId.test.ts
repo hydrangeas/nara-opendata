@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateLogId, createLogId, getLogIdValue, equalsLogId, hashCodeLogId } from './LogId';
+import { generateLogId, createLogId, getLogIdValue, equalsLogId } from './LogId';
 
 describe('LogId', () => {
   describe('generateLogId', () => {
@@ -57,28 +57,6 @@ describe('LogId', () => {
       const logId1 = generateLogId();
       const logId2 = generateLogId();
       expect(equalsLogId(logId1, logId2)).toBe(false);
-    });
-  });
-
-  describe('hashCodeLogId', () => {
-    it('同じ値のログIDは同じハッシュコードを持つ', () => {
-      const value = '550e8400-e29b-41d4-a716-446655440000';
-      const logId1 = createLogId(value);
-      const logId2 = createLogId(value);
-      expect(hashCodeLogId(logId1)).toBe(hashCodeLogId(logId2));
-    });
-
-    it('異なる値のログIDは異なるハッシュコードを持つ', () => {
-      const logId1 = generateLogId();
-      const logId2 = generateLogId();
-      expect(hashCodeLogId(logId1)).not.toBe(hashCodeLogId(logId2));
-    });
-
-    it('ハッシュコードは数値である', () => {
-      const logId = generateLogId();
-      const hashCode = hashCodeLogId(logId);
-      expect(typeof hashCode).toBe('number');
-      expect(Number.isInteger(hashCode)).toBe(true);
     });
   });
 });

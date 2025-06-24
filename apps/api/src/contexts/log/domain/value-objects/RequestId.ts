@@ -43,16 +43,3 @@ export function getRequestIdValue(requestId: RequestId): string {
 export function equalsRequestId(a: RequestId, b: RequestId): boolean {
   return a.value === b.value;
 }
-
-/**
- * リクエストIDのハッシュコードを取得する
- */
-export function hashCodeRequestId(requestId: RequestId): number {
-  let hash = 0;
-  for (let i = 0; i < requestId.value.length; i++) {
-    const char = requestId.value.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  return hash;
-}
