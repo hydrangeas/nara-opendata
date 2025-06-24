@@ -7,7 +7,11 @@ import {
 } from '@nara-opendata/shared-kernel';
 import type { UserId } from '@nara-opendata/shared-kernel';
 import type { IRateLimitRepository } from '../repositories';
-import { RateLimitLog } from '../entities/RateLimitLog';
+import {
+  reconstructRateLimitLog,
+  getRateLimitLogUserId,
+  type RateLimitLog,
+} from '../entities/RateLimitLog';
 import { createEndpoint, createAPIUser, type APIUser } from '../value-objects';
 import { APIAccessControlService } from './APIAccessControlService';
 import { RateLimitException } from '../exceptions/RateLimitException';
@@ -44,9 +48,9 @@ describe('APIAccessControlService', () => {
       );
       expect(mockRepository.save).toHaveBeenCalled();
 
-      const savedLog = vi.mocked(mockRepository.save).mock.calls[0]?.[0];
-      expect(savedLog).toBeInstanceOf(RateLimitLog);
-      expect(savedLog?.userId).toBe(userId);
+      const savedLog = vi.mocked(mockRepository.save).mock.calls[0]?.[0] as RateLimitLog;
+      expect(savedLog).toBeDefined();
+      expect(getRateLimitLogUserId(savedLog)).toBe(userId);
     });
 
     it('レート制限を超えた場合、RateLimitExceptionをスローする', async () => {
@@ -64,7 +68,7 @@ describe('APIAccessControlService', () => {
 
       // 30秒前のログ
       const thirtySecondsAgo = new Date(Date.now() - 30 * 1000);
-      const recentLog = RateLimitLog.reconstruct({
+      const recentLog = reconstructRateLimitLog({
         id: { value: 'log123' } as any,
         userId: userId,
         endpoint: createEndpoint(endpoint),
