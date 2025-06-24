@@ -2,6 +2,7 @@ export * from './LogId';
 export * from './IPAddress';
 export * from './UserAgent';
 export * from './AuthEvent';
+export * from './AuthResult';
 export * from './Provider';
 export * from './StatusCode';
 export * from './ResponseTime';

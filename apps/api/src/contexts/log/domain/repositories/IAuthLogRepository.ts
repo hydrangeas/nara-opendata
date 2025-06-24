@@ -1,7 +1,6 @@
 import type { UserId } from '@nara-opendata/shared-kernel';
 import type { AuthLogEntry } from '../entities';
-import type { LogId, TimeRange, AuthEvent, Provider } from '../value-objects';
-import type { AuthResult } from '../enums';
+import type { LogId, TimeRange, AuthEvent, Provider, AuthResult } from '../value-objects';
 
 /**
  * 認証ログリポジトリインターフェース

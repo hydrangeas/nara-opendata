@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { createUserId } from '@nara-opendata/shared-kernel';
-import { EventType, AuthResult } from '../enums';
 import {
   createAuthEvent,
+  AuthEventType,
+  createSuccessAuthResult,
+  createFailureAuthResult,
   createProvider,
   createIPAddress,
   createUserAgent,
@@ -25,7 +27,7 @@ import {
 
 describe('AuthLogEntry', () => {
   const userId = createUserId('550e8400-e29b-41d4-a716-446655440000');
-  const event = createAuthEvent(EventType.LOGIN);
+  const event = createAuthEvent(AuthEventType.LOGIN);
   const provider = createProvider('google');
   const ipAddress = createIPAddress('192.168.1.1');
   const userAgent = createUserAgent('Mozilla/5.0 Chrome/96.0');
@@ -38,7 +40,7 @@ describe('AuthLogEntry', () => {
         provider,
         ipAddress,
         userAgent,
-        result: AuthResult.SUCCESS,
+        result: createSuccessAuthResult(),
       });
 
       expect(getAuthLogEntryId(entry)).toBeDefined();
@@ -47,7 +49,7 @@ describe('AuthLogEntry', () => {
       expect(getAuthLogEntryProvider(entry)).toBe(provider);
       expect(getAuthLogEntryIPAddress(entry)).toBe(ipAddress);
       expect(getAuthLogEntryUserAgent(entry)).toBe(userAgent);
-      expect(getAuthLogEntryResult(entry)).toBe(AuthResult.SUCCESS);
+      expect(getAuthLogEntryResult(entry)).toEqual(createSuccessAuthResult());
       expect(getAuthLogEntryTimestamp(entry)).toBeInstanceOf(Date);
     });
 
@@ -59,7 +61,7 @@ describe('AuthLogEntry', () => {
         provider,
         ipAddress,
         userAgent,
-        result: AuthResult.SUCCESS,
+        result: createSuccessAuthResult(),
         timestamp,
       });
 
@@ -74,7 +76,7 @@ describe('AuthLogEntry', () => {
         provider,
         ipAddress,
         userAgent,
-        result: AuthResult.SUCCESS,
+        result: createSuccessAuthResult(),
       });
       const after = new Date();
 
@@ -97,7 +99,7 @@ describe('AuthLogEntry', () => {
         ipAddress,
         userAgent,
         timestamp,
-        result: AuthResult.SUCCESS,
+        result: createSuccessAuthResult(),
       });
 
       expect(getAuthLogEntryId(entry)).toBe(id);
@@ -107,7 +109,7 @@ describe('AuthLogEntry', () => {
       expect(getAuthLogEntryIPAddress(entry)).toBe(ipAddress);
       expect(getAuthLogEntryUserAgent(entry)).toBe(userAgent);
       expect(getAuthLogEntryTimestamp(entry)).toBe(timestamp);
-      expect(getAuthLogEntryResult(entry)).toBe(AuthResult.SUCCESS);
+      expect(getAuthLogEntryResult(entry)).toEqual(createSuccessAuthResult());
     });
   });
 
@@ -122,17 +124,17 @@ describe('AuthLogEntry', () => {
         ipAddress,
         userAgent,
         timestamp: new Date('2024-01-01'),
-        result: AuthResult.SUCCESS,
+        result: createSuccessAuthResult(),
       });
       const entry2 = reconstructAuthLogEntry({
         id,
         userId: createUserId('999e8400-e29b-41d4-a716-446655440000'),
-        event: createAuthEvent(EventType.LOGOUT),
+        event: createAuthEvent(AuthEventType.LOGOUT),
         provider: createProvider('github'),
         ipAddress: createIPAddress('10.0.0.1'),
         userAgent: createUserAgent('Firefox/95.0'),
         timestamp: new Date('2024-01-02'),
-        result: AuthResult.FAILURE,
+        result: createFailureAuthResult(),
       });
 
       expect(equalsAuthLogEntry(entry1, entry2)).toBe(true);
@@ -145,7 +147,7 @@ describe('AuthLogEntry', () => {
         provider,
         ipAddress,
         userAgent,
-        result: AuthResult.SUCCESS,
+        result: createSuccessAuthResult(),
       });
       const entry2 = createAuthLogEntry({
         userId,
@@ -153,7 +155,7 @@ describe('AuthLogEntry', () => {
         provider,
         ipAddress,
         userAgent,
-        result: AuthResult.SUCCESS,
+        result: createSuccessAuthResult(),
       });
 
       expect(equalsAuthLogEntry(entry1, entry2)).toBe(false);
@@ -168,7 +170,7 @@ describe('AuthLogEntry', () => {
         provider,
         ipAddress,
         userAgent,
-        result: AuthResult.SUCCESS,
+        result: createSuccessAuthResult(),
         timestamp: new Date('2024-01-01T12:00:00Z'),
       });
 
@@ -189,23 +191,23 @@ describe('AuthLogEntry', () => {
         provider,
         ipAddress,
         userAgent,
-        result: AuthResult.FAILURE,
+        result: createFailureAuthResult(),
       });
 
-      expect(getAuthLogEntryResult(entry)).toBe(AuthResult.FAILURE);
+      expect(getAuthLogEntryResult(entry)).toEqual(createFailureAuthResult());
     });
 
     it('期限切れトークンをログに記録できる', () => {
       const entry = createAuthLogEntry({
         userId,
-        event: createAuthEvent(EventType.TOKEN_EXPIRED),
+        event: createAuthEvent(AuthEventType.TOKEN_EXPIRED),
         provider,
         ipAddress,
         userAgent,
-        result: AuthResult.EXPIRED,
+        result: createFailureAuthResult(), // TOKEN_EXPIREDも失敗として扱う
       });
 
-      expect(getAuthLogEntryResult(entry)).toBe(AuthResult.EXPIRED);
+      expect(getAuthLogEntryResult(entry)).toEqual(createFailureAuthResult());
     });
   });
 });

@@ -1,7 +1,7 @@
 import type { UserId } from '@nara-opendata/shared-kernel';
 import type { IAuthLogRepository, IAPILogRepository } from '../repositories';
 import type { TimeRange, StatsCriteria } from '../value-objects';
-import { AuthResult } from '../enums';
+import { AuthResultValue, createAuthResult } from '../value-objects';
 
 /**
  * ログ分析結果の型定義
@@ -61,8 +61,8 @@ export class LogAnalysisService {
     // 並列でデータを取得
     const [allLogs, successCount, failureCount, eventStats, providerStats] = await Promise.all([
       this.authLogRepository.findByTimeRange(timeRange),
-      this.authLogRepository.findByResult(AuthResult.SUCCESS, timeRange),
-      this.authLogRepository.findByResult(AuthResult.FAILURE, timeRange),
+      this.authLogRepository.findByResult(createAuthResult(AuthResultValue.SUCCESS), timeRange),
+      this.authLogRepository.findByResult(createAuthResult(AuthResultValue.FAILURE), timeRange),
       this.authLogRepository.getEventStatistics(timeRange),
       this.authLogRepository.getProviderStatistics(timeRange),
     ]);
@@ -181,7 +181,7 @@ export class LogAnalysisService {
       if (!userStats.has(userIdStr)) {
         userStats.set(userIdStr, { failedAuth: 0, totalRequests: 0, errorRequests: 0 });
       }
-      if (log.result === AuthResult.FAILURE) {
+      if (log.result.value === AuthResultValue.FAILURE) {
         const stats = userStats.get(userIdStr);
         if (stats) {
           stats.failedAuth++;

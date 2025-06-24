@@ -1,6 +1,3 @@
-// Enums
-export * from './enums';
-
 // Value Objects
 export * from './value-objects';
 

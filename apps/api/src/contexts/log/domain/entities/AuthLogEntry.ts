@@ -1,7 +1,19 @@
 import type { UserId } from '@nara-opendata/shared-kernel';
-import type { AuthResult } from '../enums';
-import type { LogId, AuthEvent, Provider, IPAddress, UserAgent } from '../value-objects';
-import { generateLogId, equalsLogId, getLogIdValue } from '../value-objects';
+import type {
+  LogId,
+  AuthEvent,
+  AuthResult,
+  Provider,
+  IPAddress,
+  UserAgent,
+} from '../value-objects';
+import {
+  generateLogId,
+  equalsLogId,
+  getLogIdValue,
+  getAuthEventType,
+  getAuthResultValue,
+} from '../value-objects';
 
 /**
  * 認証ログエントリ属性
@@ -109,5 +121,7 @@ export function equalsAuthLogEntry(a: AuthLogEntry, b: AuthLogEntry): boolean {
 export function authLogEntryToString(entry: AuthLogEntry): string {
   return `AuthLogEntry(id: ${getLogIdValue(entry.id)}, userId: ${
     entry.userId
-  }, event: ${JSON.stringify(entry.event)}, result: ${entry.result}, timestamp: ${entry.timestamp.toISOString()})`;
+  }, event: ${getAuthEventType(entry.event)}, result: ${getAuthResultValue(
+    entry.result,
+  )}, timestamp: ${entry.timestamp.toISOString()})`;
 }

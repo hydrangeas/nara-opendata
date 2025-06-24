@@ -3,8 +3,13 @@ import { createUserId } from '@nara-opendata/shared-kernel';
 import { LogAnalysisService } from './LogAnalysisService';
 import type { IAuthLogRepository, IAPILogRepository } from '../repositories';
 import type { AuthLogEntry, APILogEntry } from '../entities';
-import { createTimeRange, createStatsCriteria } from '../value-objects';
-import { AuthResult, EventType } from '../enums';
+import {
+  createTimeRange,
+  createStatsCriteria,
+  createSuccessAuthResult,
+  createFailureAuthResult,
+  AuthEventType,
+} from '../value-objects';
 
 describe('LogAnalysisService', () => {
   let service: LogAnalysisService;
@@ -51,9 +56,9 @@ describe('LogAnalysisService', () => {
       const criteria = createStatsCriteria({ timeRange });
 
       const mockAuthLogs = [
-        { result: AuthResult.SUCCESS },
-        { result: AuthResult.SUCCESS },
-        { result: AuthResult.FAILURE },
+        { result: createSuccessAuthResult() },
+        { result: createSuccessAuthResult() },
+        { result: createFailureAuthResult() },
       ] as AuthLogEntry[];
 
       vi.mocked(authLogRepository.findByTimeRange).mockResolvedValue(mockAuthLogs);
@@ -61,7 +66,7 @@ describe('LogAnalysisService', () => {
         .mockResolvedValueOnce([{}, {}] as AuthLogEntry[]) // SUCCESS
         .mockResolvedValueOnce([{}] as AuthLogEntry[]); // FAILURE
       vi.mocked(authLogRepository.getEventStatistics).mockResolvedValue(
-        new Map([[EventType.LOGIN, 3]]),
+        new Map([[AuthEventType.LOGIN, 3]]),
       );
       vi.mocked(authLogRepository.getProviderStatistics).mockResolvedValue(
         new Map([
@@ -76,7 +81,7 @@ describe('LogAnalysisService', () => {
       expect(stats.successfulAuth).toBe(2);
       expect(stats.failedAuth).toBe(1);
       expect(stats.failureRate).toBeCloseTo(0.333, 3);
-      expect(stats.eventBreakdown.get(EventType.LOGIN)).toBe(3);
+      expect(stats.eventBreakdown.get(AuthEventType.LOGIN)).toBe(3);
       expect(stats.providerBreakdown.get('google')).toBe(2);
     });
 
@@ -203,10 +208,10 @@ describe('LogAnalysisService', () => {
       const normalUser = createUserId('550e8400-e29b-41d4-a716-446655440004');
 
       const mockAuthLogs = [
-        { userId: suspiciousUser, result: AuthResult.FAILURE },
-        { userId: suspiciousUser, result: AuthResult.FAILURE },
-        { userId: suspiciousUser, result: AuthResult.FAILURE },
-        { userId: normalUser, result: AuthResult.SUCCESS },
+        { userId: suspiciousUser, result: createFailureAuthResult() },
+        { userId: suspiciousUser, result: createFailureAuthResult() },
+        { userId: suspiciousUser, result: createFailureAuthResult() },
+        { userId: normalUser, result: createSuccessAuthResult() },
       ] as AuthLogEntry[];
 
       const mockAPILogs = [
@@ -234,8 +239,8 @@ describe('LogAnalysisService', () => {
 
       // Mock auth stats
       vi.mocked(authLogRepository.findByTimeRange).mockResolvedValue([
-        { result: AuthResult.SUCCESS },
-        { result: AuthResult.FAILURE },
+        { result: createSuccessAuthResult() },
+        { result: createFailureAuthResult() },
       ] as AuthLogEntry[]);
       vi.mocked(authLogRepository.findByResult)
         .mockResolvedValueOnce([{}] as AuthLogEntry[]) // SUCCESS
@@ -281,7 +286,7 @@ describe('LogAnalysisService', () => {
 
       // Mock perfect stats
       vi.mocked(authLogRepository.findByTimeRange).mockResolvedValue([
-        { result: AuthResult.SUCCESS },
+        { result: createSuccessAuthResult() },
       ] as AuthLogEntry[]);
       vi.mocked(authLogRepository.findByResult)
         .mockResolvedValueOnce([{}] as AuthLogEntry[]) // SUCCESS
