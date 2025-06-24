@@ -3,6 +3,7 @@ import {
   getUserTierLevel,
   getTierHierarchy,
   TIER_DEFAULT_RATE_LIMITS,
+  calculateRetryAfterSeconds,
 } from '@nara-opendata/shared-kernel';
 import type { IRateLimitRepository } from '../repositories';
 import { RateLimitException } from '../exceptions/RateLimitException';
@@ -41,10 +42,10 @@ export class APIAccessControlService {
 
       let retryAfterSeconds: number = rateLimit.windowSeconds;
       if (recentLogs.length > 0 && recentLogs[0]) {
-        const oldestLogTime = recentLogs[0].requestedAt.getTime();
-        const now = Date.now();
-        const elapsedSeconds = Math.floor((now - oldestLogTime) / 1000);
-        retryAfterSeconds = Math.max(1, rateLimit.windowSeconds - elapsedSeconds);
+        retryAfterSeconds = calculateRetryAfterSeconds(
+          recentLogs[0].requestedAt,
+          rateLimit.windowSeconds,
+        );
       }
 
       throw new RateLimitException({
