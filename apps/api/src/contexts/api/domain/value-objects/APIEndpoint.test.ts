@@ -13,10 +13,7 @@ describe('APIEndpoint', () => {
   describe('createAPIEndpoint', () => {
     it('APIエンドポイントを作成する', () => {
       const path = createAPIPath('/api/v1/data');
-      const endpoint = createAPIEndpoint({
-        path,
-        requiredTier: TierLevel.TIER1,
-      });
+      const endpoint = createAPIEndpoint(path, TierLevel.TIER1);
 
       expect(getAPIEndpointPath(endpoint)).toBe(path);
       expect(getAPIEndpointRequiredTier(endpoint)).toBe(TierLevel.TIER1);
@@ -27,48 +24,30 @@ describe('APIEndpoint', () => {
     const path = createAPIPath('/api/v1/data');
 
     it('同じティアレベルでアクセス可能', () => {
-      const endpoint = createAPIEndpoint({
-        path,
-        requiredTier: TierLevel.TIER2,
-      });
+      const endpoint = createAPIEndpoint(path, TierLevel.TIER2);
       const userTier = createUserTier(TierLevel.TIER2);
 
       expect(validateAccess(endpoint, userTier)).toBe(true);
     });
 
     it('より高いティアレベルでアクセス可能', () => {
-      const endpoint = createAPIEndpoint({
-        path,
-        requiredTier: TierLevel.TIER1,
-      });
+      const endpoint = createAPIEndpoint(path, TierLevel.TIER1);
       const userTier = createUserTier(TierLevel.TIER3);
 
       expect(validateAccess(endpoint, userTier)).toBe(true);
     });
 
     it('より低いティアレベルではアクセス不可', () => {
-      const endpoint = createAPIEndpoint({
-        path,
-        requiredTier: TierLevel.TIER3,
-      });
+      const endpoint = createAPIEndpoint(path, TierLevel.TIER3);
       const userTier = createUserTier(TierLevel.TIER1);
 
       expect(validateAccess(endpoint, userTier)).toBe(false);
     });
 
     it('各ティアレベルの階層が正しく機能する', () => {
-      const endpointTier1 = createAPIEndpoint({
-        path,
-        requiredTier: TierLevel.TIER1,
-      });
-      const endpointTier2 = createAPIEndpoint({
-        path,
-        requiredTier: TierLevel.TIER2,
-      });
-      const endpointTier3 = createAPIEndpoint({
-        path,
-        requiredTier: TierLevel.TIER3,
-      });
+      const endpointTier1 = createAPIEndpoint(path, TierLevel.TIER1);
+      const endpointTier2 = createAPIEndpoint(path, TierLevel.TIER2);
+      const endpointTier3 = createAPIEndpoint(path, TierLevel.TIER3);
 
       const tier1User = createUserTier(TierLevel.TIER1);
       const tier2User = createUserTier(TierLevel.TIER2);
@@ -94,14 +73,8 @@ describe('APIEndpoint', () => {
   describe('equalsAPIEndpoint', () => {
     it('同じパスとティアのエンドポイントは等しい', () => {
       const path = createAPIPath('/api/v1/data');
-      const endpoint1 = createAPIEndpoint({
-        path,
-        requiredTier: TierLevel.TIER2,
-      });
-      const endpoint2 = createAPIEndpoint({
-        path,
-        requiredTier: TierLevel.TIER2,
-      });
+      const endpoint1 = createAPIEndpoint(path, TierLevel.TIER2);
+      const endpoint2 = createAPIEndpoint(path, TierLevel.TIER2);
 
       expect(equalsAPIEndpoint(endpoint1, endpoint2)).toBe(true);
     });
@@ -109,28 +82,16 @@ describe('APIEndpoint', () => {
     it('パスが異なるエンドポイントは等しくない', () => {
       const path1 = createAPIPath('/api/v1/data');
       const path2 = createAPIPath('/api/v2/data');
-      const endpoint1 = createAPIEndpoint({
-        path: path1,
-        requiredTier: TierLevel.TIER2,
-      });
-      const endpoint2 = createAPIEndpoint({
-        path: path2,
-        requiredTier: TierLevel.TIER2,
-      });
+      const endpoint1 = createAPIEndpoint(path1, TierLevel.TIER2);
+      const endpoint2 = createAPIEndpoint(path2, TierLevel.TIER2);
 
       expect(equalsAPIEndpoint(endpoint1, endpoint2)).toBe(false);
     });
 
     it('ティアが異なるエンドポイントは等しくない', () => {
       const path = createAPIPath('/api/v1/data');
-      const endpoint1 = createAPIEndpoint({
-        path,
-        requiredTier: TierLevel.TIER1,
-      });
-      const endpoint2 = createAPIEndpoint({
-        path,
-        requiredTier: TierLevel.TIER2,
-      });
+      const endpoint1 = createAPIEndpoint(path, TierLevel.TIER1);
+      const endpoint2 = createAPIEndpoint(path, TierLevel.TIER2);
 
       expect(equalsAPIEndpoint(endpoint1, endpoint2)).toBe(false);
     });

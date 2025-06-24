@@ -18,13 +18,10 @@ export type APIEndpoint = IAPIEndpointAttributes & { readonly brand: unique symb
 /**
  * APIエンドポイントを作成する
  */
-export function createAPIEndpoint(attributes: {
-  path: APIPath;
-  requiredTier: TierLevel;
-}): APIEndpoint {
+export function createAPIEndpoint(path: APIPath, requiredTier: TierLevel): APIEndpoint {
   return {
-    path: attributes.path,
-    requiredTier: attributes.requiredTier,
+    path,
+    requiredTier,
   } as APIEndpoint;
 }
 
