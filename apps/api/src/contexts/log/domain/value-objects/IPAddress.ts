@@ -72,25 +72,3 @@ export function isIPv4(ipAddress: IPAddress): boolean {
 export function isIPv6(ipAddress: IPAddress): boolean {
   return IPV6_PATTERN.test(ipAddress.value);
 }
-
-/**
- * IPアドレスを匿名化する（プライバシー保護）
- * IPv4: 最後のオクテットを0に置換
- * IPv6: 後半部分をマスク
- */
-export function anonymizeIPAddress(ipAddress: IPAddress): IPAddress {
-  if (isIPv4(ipAddress)) {
-    const parts = ipAddress.value.split('.');
-    parts[3] = '0';
-    return createIPAddress(parts.join('.'));
-  } else {
-    // IPv6の場合、後半部分をマスク
-    const parts = ipAddress.value.split(':');
-    if (parts.length >= 4) {
-      for (let i = 4; i < parts.length; i++) {
-        parts[i] = '0';
-      }
-    }
-    return createIPAddress(parts.join(':'));
-  }
-}

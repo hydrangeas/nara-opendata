@@ -6,7 +6,6 @@ import {
   isValidIPAddress,
   isIPv4,
   isIPv6,
-  anonymizeIPAddress,
 } from './IPAddress';
 
 describe('IPAddress', () => {
@@ -88,26 +87,6 @@ describe('IPAddress', () => {
       const ip1 = createIPAddress('192.168.1.1');
       const ip2 = createIPAddress('192.168.1.2');
       expect(equalsIPAddress(ip1, ip2)).toBe(false);
-    });
-  });
-
-  describe('anonymizeIPAddress', () => {
-    it('IPv4アドレスの最後のオクテットを0にする', () => {
-      const ip = createIPAddress('192.168.1.123');
-      const anonymized = anonymizeIPAddress(ip);
-      expect(getIPAddressValue(anonymized)).toBe('192.168.1.0');
-    });
-
-    it('IPv6アドレスの後半部分をマスクする', () => {
-      const ip = createIPAddress('2001:db8:85a3:8d3:1319:8a2e:370:7334');
-      const anonymized = anonymizeIPAddress(ip);
-      expect(getIPAddressValue(anonymized)).toBe('2001:db8:85a3:8d3:0:0:0:0');
-    });
-
-    it('短縮形のIPv6アドレスも処理できる', () => {
-      const ip = createIPAddress('2001:db8::8a2e:370:7334');
-      const anonymized = anonymizeIPAddress(ip);
-      expect(getIPAddressValue(anonymized)).toBe('2001:db8::8a2e:0:0');
     });
   });
 });
