@@ -19,10 +19,14 @@ export function createTimeRange(start: Date, end: Date): TimeRange {
   if (!(start instanceof Date) || !(end instanceof Date)) {
     throw new Error('TimeRange start and end must be Date instances');
   }
-  if (start.getTime() > end.getTime()) {
+
+  const timeRange = { start, end } as TimeRange;
+
+  if (!isValidTimeRange(timeRange)) {
     throw new Error('TimeRange start must be before or equal to end');
   }
-  return { start, end } as TimeRange;
+
+  return timeRange;
 }
 
 /**
