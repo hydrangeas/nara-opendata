@@ -7,7 +7,7 @@ import {
 } from '@nara-opendata/shared-kernel';
 import type { IRateLimitRepository } from '../repositories';
 import { RateLimitException } from '../exceptions/RateLimitException';
-import { createRateLimitLog, getRateLimitLogRequestedAt } from '../entities/RateLimitLog';
+import { RateLimitLog } from '../entities/RateLimitLog';
 import { createEndpoint, type APIUser, getAPIUserId, getAPIUserTier } from '../value-objects';
 
 /**
@@ -43,7 +43,7 @@ export class APIAccessControlService {
       let retryAfterSeconds: number = rateLimit.windowSeconds;
       if (recentLogs.length > 0 && recentLogs[0]) {
         retryAfterSeconds = calculateRetryAfterSeconds(
-          getRateLimitLogRequestedAt(recentLogs[0]),
+          recentLogs[0].requestedAt,
           rateLimit.windowSeconds,
         );
       }
@@ -56,7 +56,7 @@ export class APIAccessControlService {
     }
 
     // レート制限内の場合、新しいログを記録
-    const log = createRateLimitLog({
+    const log = RateLimitLog.create({
       userId,
       endpoint: createEndpoint(endpoint),
     });
