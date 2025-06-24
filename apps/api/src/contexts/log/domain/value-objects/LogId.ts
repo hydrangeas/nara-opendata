@@ -24,10 +24,11 @@ export function generateLogId(): LogId {
  * 既存の値からログIDを作成する
  */
 export function createLogId(value: string): LogId {
-  if (!value || value.trim() === '') {
+  const trimmedValue = value.trim();
+  if (!trimmedValue) {
     throw new Error('LogId cannot be empty');
   }
-  return { value } as LogId;
+  return { value: trimmedValue } as LogId;
 }
 
 /**

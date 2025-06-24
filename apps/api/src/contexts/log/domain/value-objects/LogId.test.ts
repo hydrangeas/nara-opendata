@@ -39,6 +39,12 @@ describe('LogId', () => {
       expect(() => createLogId('  ')).toThrow('LogId cannot be empty');
     });
 
+    it('前後の空白を削除する', () => {
+      const value = '550e8400-e29b-41d4-a716-446655440000';
+      const logId = createLogId(`  ${value}  `);
+      expect(getLogIdValue(logId)).toBe(value);
+    });
+
     it('undefinedやnullを拒否する', () => {
       expect(() => createLogId(undefined as any)).toThrow();
       expect(() => createLogId(null as any)).toThrow();
