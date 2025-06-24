@@ -59,6 +59,10 @@ temp
 *.tmp
 *.temp
 
+# Vite temporary files
+*.timestamp-*-*.mjs
+vite.config.ts.*.mjs
+
 # Package manager
 .yarn/*
 !.yarn/patches

@@ -1,4 +1,8 @@
-import { createUserId, TierLevel } from '@nara-opendata/shared-kernel';
+import {
+  createUserId,
+  TierLevel,
+  calculateRetryAfterSecondsFromResetTime,
+} from '@nara-opendata/shared-kernel';
 import type { AuthenticatedUser } from '../value-objects/AuthenticatedUser';
 import {
   createAuthenticatedUser,
@@ -338,8 +342,6 @@ export const AuthenticationService = {
    * 次のリクエストが可能になるまでの秒数を計算する
    */
   calculateRetryAfterSeconds(resetTime: Date): number {
-    const now = new Date();
-    const diff = resetTime.getTime() - now.getTime();
-    return Math.max(0, Math.ceil(diff / 1000));
+    return calculateRetryAfterSecondsFromResetTime(resetTime);
   },
 } as const;
