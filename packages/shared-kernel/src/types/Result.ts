@@ -42,4 +42,4 @@ export const Result = {
   failure,
   isSuccess,
   isFailure,
-};
+} as const;
