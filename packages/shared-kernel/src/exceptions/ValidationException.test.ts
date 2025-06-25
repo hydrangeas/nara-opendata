@@ -64,7 +64,7 @@ describe('ValidationException', () => {
     ];
     const exception = new ValidationException('Validation failed', errors);
 
-    const errorDetails = exception.domainError.details?.validationErrors as any[];
+    const errorDetails = exception.domainError.details?.['validationErrors'] as any[];
     expect(errorDetails).toHaveLength(2);
     expect(errorDetails[0]).toEqual({
       code: 'FIELD_REQUIRED',
@@ -82,7 +82,7 @@ describe('ValidationException', () => {
     const exception = new ValidationException('No errors', []);
 
     expect(exception.validationErrors).toEqual([]);
-    expect(exception.domainError.details?.validationErrors).toEqual([]);
+    expect(exception.domainError.details?.['validationErrors']).toEqual([]);
   });
 
   it('DomainExceptionを継承している', () => {

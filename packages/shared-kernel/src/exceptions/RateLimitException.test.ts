@@ -27,7 +27,7 @@ describe('RateLimitException', () => {
 
     expect(exception.message).toBe('Too many requests');
     expect(exception.retryAfter).toBe(retryAfter);
-    expect(exception.domainError.details?.retryAfter).toBe('2024-01-01T12:30:00.000Z');
+    expect(exception.domainError.details?.['retryAfter']).toBe('2024-01-01T12:30:00.000Z');
   });
 
   it('詳細情報付きの例外を作成できる', () => {
@@ -50,7 +50,7 @@ describe('RateLimitException', () => {
     const exception = new RateLimitException('Rate limit exceeded');
 
     expect(exception.retryAfter).toBeUndefined();
-    expect(exception.domainError.details?.retryAfter).toBeUndefined();
+    expect(exception.domainError.details?.['retryAfter']).toBeUndefined();
   });
 
   it('DomainExceptionを継承している', () => {

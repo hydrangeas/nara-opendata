@@ -49,8 +49,8 @@ describe('DataNotFoundException', () => {
 
     expect(exception.resourceType).toBe('File');
     expect(exception.resourceId).toBeUndefined();
-    expect(exception.domainError.details?.resourceType).toBe('File');
-    expect(exception.domainError.details?.resourceId).toBeUndefined();
+    expect(exception.domainError.details?.['resourceType']).toBe('File');
+    expect(exception.domainError.details?.['resourceId']).toBeUndefined();
   });
 
   it('DomainExceptionを継承している', () => {
