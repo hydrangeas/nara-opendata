@@ -15,17 +15,20 @@ export type LogId = ILogIdAttributes & { readonly brand: unique symbol };
  */
 export function createLogId(value?: string): LogId {
   if (value !== undefined) {
+    // 前後の空白を削除
+    const trimmedValue = value.trim();
+
     // 空文字列チェック
-    if (value === '') {
+    if (trimmedValue === '') {
       throw new Error('LogId cannot be empty');
     }
 
     // 既存のUUIDを使用する場合の検証
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(value)) {
+    if (!uuidRegex.test(trimmedValue)) {
       throw new Error('Invalid UUID format');
     }
-    return { value: value.toLowerCase() } as LogId;
+    return { value: trimmedValue.toLowerCase() } as LogId;
   }
 
   // 新規生成（小文字に正規化）
