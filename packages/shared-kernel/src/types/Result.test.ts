@@ -10,7 +10,11 @@ describe('Result', () => {
       const result = success(value);
 
       expect(result.success).toBe(true);
-      expect((result as any).value).toBe(value);
+      if (isSuccess(result)) {
+        expect(result.value).toBe(value);
+      } else {
+        throw new Error('Expected success result');
+      }
     });
 
     it('任意の型の値を格納できる', () => {
@@ -18,9 +22,15 @@ describe('Result', () => {
       const objectResult = success({ id: 1, name: 'test' });
       const arrayResult = success([1, 2, 3]);
 
-      expect((numberResult as any).value).toBe(42);
-      expect((objectResult as any).value).toEqual({ id: 1, name: 'test' });
-      expect((arrayResult as any).value).toEqual([1, 2, 3]);
+      if (isSuccess(numberResult)) {
+        expect(numberResult.value).toBe(42);
+      }
+      if (isSuccess(objectResult)) {
+        expect(objectResult.value).toEqual({ id: 1, name: 'test' });
+      }
+      if (isSuccess(arrayResult)) {
+        expect(arrayResult.value).toEqual([1, 2, 3]);
+      }
     });
   });
 
@@ -30,7 +40,11 @@ describe('Result', () => {
       const result = failure<string>(error);
 
       expect(result.success).toBe(false);
-      expect((result as any).error).toBe(error);
+      if (isFailure(result)) {
+        expect(result.error).toBe(error);
+      } else {
+        throw new Error('Expected failure result');
+      }
     });
 
     it('異なるエラータイプで失敗を作成できる', () => {
@@ -48,8 +62,12 @@ describe('Result', () => {
       const result1 = failure<string>(validationError);
       const result2 = failure<number>(notFoundError);
 
-      expect((result1 as any).error.type).toBe(ErrorType.Validation);
-      expect((result2 as any).error.type).toBe(ErrorType.NotFound);
+      if (isFailure(result1)) {
+        expect(result1.error.type).toBe(ErrorType.Validation);
+      }
+      if (isFailure(result2)) {
+        expect(result2.error.type).toBe(ErrorType.NotFound);
+      }
     });
   });
 
