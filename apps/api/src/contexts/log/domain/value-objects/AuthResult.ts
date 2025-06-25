@@ -53,17 +53,3 @@ export function equalsAuthResult(a: AuthResult, b: AuthResult): boolean {
 export function isSuccessfulAuthResult(authResult: AuthResult): boolean {
   return authResult.value === AuthResultValue.SUCCESS;
 }
-
-/**
- * 成功の認証結果を作成する（便利関数）
- */
-export function createSuccessAuthResult(): AuthResult {
-  return createAuthResult(AuthResultValue.SUCCESS);
-}
-
-/**
- * 失敗の認証結果を作成する（便利関数）
- */
-export function createFailureAuthResult(): AuthResult {
-  return createAuthResult(AuthResultValue.FAILURE);
-}

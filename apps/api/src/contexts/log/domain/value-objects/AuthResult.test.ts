@@ -4,9 +4,8 @@ import {
   getAuthResultValue,
   equalsAuthResult,
   isSuccessfulAuthResult,
-  createSuccessAuthResult,
-  createFailureAuthResult,
   AuthResultValue,
+  type AuthResult,
 } from './AuthResult';
 
 describe('AuthResult', () => {
@@ -48,26 +47,12 @@ describe('AuthResult', () => {
     });
   });
 
-  describe('便利関数', () => {
-    it('createSuccessAuthResultは成功の結果を作成する', () => {
-      const result = createSuccessAuthResult();
-      expect(getAuthResultValue(result)).toBe(AuthResultValue.SUCCESS);
-      expect(isSuccessfulAuthResult(result)).toBe(true);
-    });
-
-    it('createFailureAuthResultは失敗の結果を作成する', () => {
-      const result = createFailureAuthResult();
-      expect(getAuthResultValue(result)).toBe(AuthResultValue.FAILURE);
-      expect(isSuccessfulAuthResult(result)).toBe(false);
-    });
-  });
-
   describe('ユースケース', () => {
     it('認証ログで成功/失敗を記録できる', () => {
       const authAttempts = [
-        { user: 'user1', result: createSuccessAuthResult() },
-        { user: 'user2', result: createFailureAuthResult() },
-        { user: 'user3', result: createSuccessAuthResult() },
+        { user: 'user1', result: createAuthResult(AuthResultValue.SUCCESS) },
+        { user: 'user2', result: createAuthResult(AuthResultValue.FAILURE) },
+        { user: 'user3', result: createAuthResult(AuthResultValue.SUCCESS) },
       ];
 
       // 成功した認証の数をカウント
@@ -78,7 +63,7 @@ describe('AuthResult', () => {
     });
 
     it('認証結果に基づいて処理を分岐できる', () => {
-      const handleAuth = (result: typeof createSuccessAuthResult) => {
+      const handleAuth = (result: () => AuthResult) => {
         const authResult = result();
         if (isSuccessfulAuthResult(authResult)) {
           return 'セッションを作成しました';
@@ -87,8 +72,12 @@ describe('AuthResult', () => {
         }
       };
 
-      expect(handleAuth(createSuccessAuthResult)).toBe('セッションを作成しました');
-      expect(handleAuth(createFailureAuthResult)).toBe('ログインに失敗しました');
+      expect(handleAuth(() => createAuthResult(AuthResultValue.SUCCESS))).toBe(
+        'セッションを作成しました',
+      );
+      expect(handleAuth(() => createAuthResult(AuthResultValue.FAILURE))).toBe(
+        'ログインに失敗しました',
+      );
     });
   });
 });
