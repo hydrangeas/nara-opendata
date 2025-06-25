@@ -1,3 +1,5 @@
+import { isIP, isIPv4 as isIPv4Native, isIPv6 as isIPv6Native } from 'net';
+
 /**
  * IPアドレス属性
  */
@@ -10,17 +12,6 @@ export interface IIPAddressAttributes {
  * IPv4とIPv6の両方をサポート
  */
 export type IPAddress = IIPAddressAttributes & { readonly brand: unique symbol };
-
-/**
- * IPv4の正規表現パターン
- */
-const IPV4_PATTERN =
-  /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-
-/**
- * IPv6の正規表現パターン（簡易版）
- */
-const IPV6_PATTERN = /^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$/;
 
 /**
  * IPアドレスを作成する
@@ -54,21 +45,22 @@ export function equalsIPAddress(a: IPAddress, b: IPAddress): boolean {
 
 /**
  * IPアドレスが有効かチェックする
+ * Node.js標準のnet APIを使用してより厳密な検証を実施
  */
 export function isValidIPAddress(value: string): boolean {
-  return IPV4_PATTERN.test(value) || IPV6_PATTERN.test(value);
+  return isIP(value) !== 0; // 0: invalid, 4: IPv4, 6: IPv6
 }
 
 /**
  * IPアドレスがIPv4かチェックする
  */
 export function isIPv4(ipAddress: IPAddress): boolean {
-  return IPV4_PATTERN.test(ipAddress.value);
+  return isIPv4Native(ipAddress.value);
 }
 
 /**
  * IPアドレスがIPv6かチェックする
  */
 export function isIPv6(ipAddress: IPAddress): boolean {
-  return IPV6_PATTERN.test(ipAddress.value);
+  return isIPv6Native(ipAddress.value);
 }
