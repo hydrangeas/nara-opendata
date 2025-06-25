@@ -22,41 +22,4 @@ export class DataNotFoundException extends DomainException {
       resourceId,
     });
   }
-
-  /**
-   * リソースが見つからない例外を作成
-   */
-  static resourceNotFound(resourceType: string, resourceId: string): DataNotFoundException {
-    return new DataNotFoundException(
-      `${resourceType} with ID '${resourceId}' not found`,
-      resourceType,
-      resourceId,
-    );
-  }
-
-  /**
-   * ファイルが見つからない例外を作成
-   */
-  static fileNotFound(filePath: string): DataNotFoundException {
-    return new DataNotFoundException(`File not found: ${filePath}`, 'File', filePath, { filePath });
-  }
-
-  /**
-   * エンティティが見つからない例外を作成
-   */
-  static entityNotFound(
-    entityName: string,
-    criteria: Record<string, unknown>,
-  ): DataNotFoundException {
-    const criteriaStr = Object.entries(criteria)
-      .map(([key, value]) => `${key}=${value}`)
-      .join(', ');
-
-    return new DataNotFoundException(
-      `${entityName} not found with criteria: ${criteriaStr}`,
-      entityName,
-      undefined,
-      { criteria },
-    );
-  }
 }

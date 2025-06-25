@@ -34,37 +34,6 @@ describe('AuthenticationException', () => {
     expect(exception).toBeInstanceOf(Error);
   });
 
-  describe('static factory methods', () => {
-    it('invalidCredentialsで無効な認証情報の例外を作成できる', () => {
-      const exception = AuthenticationException.invalidCredentials();
-
-      expect(exception.message).toBe('Invalid credentials');
-      expect(exception.code).toBe('AUTH_ERROR');
-      expect(exception.domainError.type).toBe(ErrorType.Unauthorized);
-    });
-
-    it('tokenExpiredでトークン期限切れの例外を作成できる', () => {
-      const exception = AuthenticationException.tokenExpired();
-
-      expect(exception.message).toBe('Authentication token has expired');
-      expect(exception.code).toBe('AUTH_ERROR');
-    });
-
-    it('invalidTokenで無効なトークンの例外を作成できる', () => {
-      const exception = AuthenticationException.invalidToken();
-
-      expect(exception.message).toBe('Invalid authentication token');
-      expect(exception.code).toBe('AUTH_ERROR');
-    });
-
-    it('authenticationRequiredで認証が必要な例外を作成できる', () => {
-      const exception = AuthenticationException.authenticationRequired();
-
-      expect(exception.message).toBe('Authentication is required');
-      expect(exception.code).toBe('AUTH_ERROR');
-    });
-  });
-
   it('toJSONで構造化されたエラー情報を返す', () => {
     const details = { provider: 'google', reason: 'token_invalid' };
     const exception = new AuthenticationException('Google auth failed', details);

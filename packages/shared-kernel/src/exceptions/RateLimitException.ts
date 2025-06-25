@@ -20,34 +20,4 @@ export class RateLimitException extends DomainException {
       retryAfter: retryAfter?.toISOString(),
     });
   }
-
-  /**
-   * レート制限超過の例外を作成
-   */
-  static limitExceeded(
-    limit: number,
-    windowMinutes: number,
-    retryAfter?: Date,
-  ): RateLimitException {
-    const message = `Rate limit exceeded. Limit: ${limit} requests per ${windowMinutes} minutes`;
-
-    return new RateLimitException(message, retryAfter, {
-      limit,
-      windowMinutes,
-    });
-  }
-
-  /**
-   * リトライ可能時刻を秒数で取得
-   */
-  getRetryAfterSeconds(): number | undefined {
-    if (!this.retryAfter) {
-      return undefined;
-    }
-
-    const now = new Date();
-    const diff = this.retryAfter.getTime() - now.getTime();
-
-    return Math.max(0, Math.ceil(diff / 1000));
-  }
 }

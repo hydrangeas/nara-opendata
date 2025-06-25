@@ -93,7 +93,7 @@ describe('UserAuthenticated', () => {
         userAgent: 'Safari/17.0',
       },
     });
-    expect(json.eventId).toBeDefined();
+    expect(json['eventId']).toBeDefined();
   });
 
   it('異なるプロバイダーとティアの組み合わせをサポート', () => {
