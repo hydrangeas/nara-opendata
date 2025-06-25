@@ -32,6 +32,17 @@ describe('LogId', () => {
       expect(() => createLogId('')).toThrow('LogId cannot be empty');
     });
 
+    it('空白のみの文字列を拒否する', () => {
+      expect(() => createLogId('  ')).toThrow('LogId cannot be empty');
+      expect(() => createLogId('\t\n')).toThrow('LogId cannot be empty');
+    });
+
+    it('前後の空白を削除する', () => {
+      const uuid = '123e4567-e89b-42d3-a456-426614174000';
+      const logId = createLogId(`  ${uuid}  `);
+      expect(getLogIdValue(logId)).toBe(uuid.toLowerCase());
+    });
+
     it('引数なしで新しいUUIDを生成する', () => {
       const logId = createLogId();
       const value = getLogIdValue(logId);
