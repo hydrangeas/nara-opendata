@@ -51,4 +51,4 @@ export const ValidationResult = {
   success: validationSuccess,
   failure: validationFailure,
   combine: combineValidationResults,
-};
+} as const;
