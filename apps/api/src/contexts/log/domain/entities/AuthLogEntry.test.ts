@@ -85,10 +85,54 @@ describe('AuthLogEntry', () => {
       expect(timestamp.getTime()).toBeGreaterThanOrEqual(before.getTime());
       expect(timestamp.getTime()).toBeLessThanOrEqual(after.getTime());
     });
+
+    it('IPAddressとUserAgentを省略できる', () => {
+      const entry = createAuthLogEntry({
+        userId,
+        event,
+        provider,
+        result: createAuthResult(AuthResultValue.SUCCESS),
+      });
+
+      expect(getAuthLogEntryId(entry)).toBeDefined();
+      expect(getAuthLogEntryUserId(entry)).toBe(userId);
+      expect(getAuthLogEntryEvent(entry)).toBe(event);
+      expect(getAuthLogEntryProvider(entry)).toBe(provider);
+      expect(getAuthLogEntryIPAddress(entry)).toBeUndefined();
+      expect(getAuthLogEntryUserAgent(entry)).toBeUndefined();
+      expect(getAuthLogEntryResult(entry)).toEqual(createAuthResult(AuthResultValue.SUCCESS));
+      expect(getAuthLogEntryTimestamp(entry)).toBeInstanceOf(Date);
+    });
+
+    it('IPAddressのみを指定できる', () => {
+      const entry = createAuthLogEntry({
+        userId,
+        event,
+        provider,
+        ipAddress,
+        result: createAuthResult(AuthResultValue.SUCCESS),
+      });
+
+      expect(getAuthLogEntryIPAddress(entry)).toBe(ipAddress);
+      expect(getAuthLogEntryUserAgent(entry)).toBeUndefined();
+    });
+
+    it('UserAgentのみを指定できる', () => {
+      const entry = createAuthLogEntry({
+        userId,
+        event,
+        provider,
+        userAgent,
+        result: createAuthResult(AuthResultValue.SUCCESS),
+      });
+
+      expect(getAuthLogEntryIPAddress(entry)).toBeUndefined();
+      expect(getAuthLogEntryUserAgent(entry)).toBe(userAgent);
+    });
   });
 
   describe('reconstructAuthLogEntry', () => {
-    it('既存のデータから再構築する', () => {
+    it('すべてのフィールドを持つデータから再構築する', () => {
       const id = createLogId('123e4567-e89b-12d3-a456-426614174000');
       const timestamp = new Date('2024-01-01T12:00:00Z');
 
@@ -109,6 +153,29 @@ describe('AuthLogEntry', () => {
       expect(getAuthLogEntryProvider(entry)).toBe(provider);
       expect(getAuthLogEntryIPAddress(entry)).toBe(ipAddress);
       expect(getAuthLogEntryUserAgent(entry)).toBe(userAgent);
+      expect(getAuthLogEntryTimestamp(entry)).toBe(timestamp);
+      expect(getAuthLogEntryResult(entry)).toEqual(createAuthResult(AuthResultValue.SUCCESS));
+    });
+
+    it('IPAddressとUserAgentがないデータから再構築する', () => {
+      const id = createLogId('123e4567-e89b-12d3-a456-426614174000');
+      const timestamp = new Date('2024-01-01T12:00:00Z');
+
+      const entry = reconstructAuthLogEntry({
+        id,
+        userId,
+        event,
+        provider,
+        timestamp,
+        result: createAuthResult(AuthResultValue.SUCCESS),
+      });
+
+      expect(getAuthLogEntryId(entry)).toBe(id);
+      expect(getAuthLogEntryUserId(entry)).toBe(userId);
+      expect(getAuthLogEntryEvent(entry)).toBe(event);
+      expect(getAuthLogEntryProvider(entry)).toBe(provider);
+      expect(getAuthLogEntryIPAddress(entry)).toBeUndefined();
+      expect(getAuthLogEntryUserAgent(entry)).toBeUndefined();
       expect(getAuthLogEntryTimestamp(entry)).toBe(timestamp);
       expect(getAuthLogEntryResult(entry)).toEqual(createAuthResult(AuthResultValue.SUCCESS));
     });

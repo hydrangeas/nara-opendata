@@ -23,8 +23,8 @@ export interface IAuthLogEntryAttributes {
   userId: UserId;
   event: AuthEvent;
   provider: Provider;
-  ipAddress: IPAddress;
-  userAgent: UserAgent;
+  ipAddress?: IPAddress;
+  userAgent?: UserAgent;
   timestamp: Date;
   result: AuthResult;
 }
@@ -42,8 +42,8 @@ export function createAuthLogEntry(params: {
   userId: UserId;
   event: AuthEvent;
   provider: Provider;
-  ipAddress: IPAddress;
-  userAgent: UserAgent;
+  ipAddress?: IPAddress;
+  userAgent?: UserAgent;
   result: AuthResult;
   timestamp?: Date;
 }): AuthLogEntry {
@@ -92,11 +92,11 @@ export function getAuthLogEntryProvider(entry: AuthLogEntry): Provider {
   return entry.provider;
 }
 
-export function getAuthLogEntryIPAddress(entry: AuthLogEntry): IPAddress {
+export function getAuthLogEntryIPAddress(entry: AuthLogEntry): IPAddress | undefined {
   return entry.ipAddress;
 }
 
-export function getAuthLogEntryUserAgent(entry: AuthLogEntry): UserAgent {
+export function getAuthLogEntryUserAgent(entry: AuthLogEntry): UserAgent | undefined {
   return entry.userAgent;
 }
 
