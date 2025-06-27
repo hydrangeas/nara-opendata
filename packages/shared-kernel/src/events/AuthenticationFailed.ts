@@ -17,13 +17,6 @@ export class AuthenticationFailed extends DomainEvent {
     super(occurredAt);
   }
 
-  getEventData(): Record<string, unknown> {
-    return {
-      attemptedUserId: this.attemptedUserId,
-      reason: this.reason,
-      provider: this.provider,
-      ipAddress: this.ipAddress,
-      userAgent: this.userAgent,
-    };
-  }
+  // 業界標準に準拠：getEventData()を廃止し、プロパティを直接公開
+  // toJSON()メソッドが自動的に全てのpublicプロパティをシリアライズ
 }

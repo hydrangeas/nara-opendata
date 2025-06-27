@@ -19,15 +19,6 @@ export class RateLimitExceeded extends DomainEvent {
     super(occurredAt);
   }
 
-  getEventData(): Record<string, unknown> {
-    return {
-      userId: this.userId,
-      endpoint: this.endpoint,
-      limit: this.limit,
-      windowMinutes: this.windowMinutes,
-      requestCount: this.requestCount,
-      retryAfter: this.retryAfter.toISOString(),
-      ipAddress: this.ipAddress,
-    };
-  }
+  // 業界標準に準拠：getEventData()を廃止し、プロパティを直接公開
+  // toJSON()メソッドが自動的に全てのpublicプロパティをシリアライズ
 }

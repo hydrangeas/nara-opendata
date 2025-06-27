@@ -30,20 +30,26 @@ export abstract class DomainEvent {
   }
 
   /**
-   * イベントデータを取得する
-   */
-  abstract getEventData(): Record<string, unknown>;
-
-  /**
    * イベントをJSON形式で取得する
+   * 業界標準に準拠：メタデータとイベント固有のプロパティを統合して返す
    */
   toJSON(): Record<string, unknown> {
-    return {
-      eventId: this.eventId,
-      eventName: this.eventName,
-      eventVersion: this.eventVersion,
-      occurredAt: this.occurredAt.toISOString(),
-      data: this.getEventData(),
-    };
+    // デフォルト実装：全てのpublicプロパティをシリアライズ
+    const eventData = Object.entries(this)
+      .filter(([key]) => !key.startsWith('_')) // プライベートプロパティを除外
+      .reduce(
+        (acc, [key, value]) => {
+          // Dateオブジェクトは ISO 文字列に変換
+          if (value instanceof Date) {
+            acc[key] = value.toISOString();
+          } else if (value !== undefined) {
+            acc[key] = value;
+          }
+          return acc;
+        },
+        {} as Record<string, unknown>,
+      );
+
+    return eventData;
   }
 }

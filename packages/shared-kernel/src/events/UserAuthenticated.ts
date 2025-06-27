@@ -17,13 +17,6 @@ export class UserAuthenticated extends DomainEvent {
     super(occurredAt);
   }
 
-  getEventData(): Record<string, unknown> {
-    return {
-      userId: this.userId,
-      provider: this.provider,
-      userTier: this.userTier,
-      ipAddress: this.ipAddress,
-      userAgent: this.userAgent,
-    };
-  }
+  // 業界標準に準拠：getEventData()を廃止し、プロパティを直接公開
+  // toJSON()メソッドが自動的に全てのpublicプロパティをシリアライズ
 }

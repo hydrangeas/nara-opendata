@@ -18,14 +18,6 @@ export class DataRetrieved extends DomainEvent {
     super(occurredAt);
   }
 
-  getEventData(): Record<string, unknown> {
-    return {
-      userId: this.userId,
-      resourcePath: this.resourcePath,
-      fileSize: this.fileSize,
-      contentType: this.contentType,
-      responseTime: this.responseTime,
-      ipAddress: this.ipAddress,
-    };
-  }
+  // 業界標準に準拠：getEventData()を廃止し、プロパティを直接公開
+  // toJSON()メソッドが自動的に全てのpublicプロパティをシリアライズ
 }

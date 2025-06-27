@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { DomainEvent } from './DomainEvent';
 
 // テスト用の具体的なDomainEvent実装
+// 業界標準に準拠：getEventData()を廃止し、プロパティを直接公開
 class TestDomainEvent extends DomainEvent {
   public readonly eventName = 'TestEvent';
 
@@ -11,13 +12,6 @@ class TestDomainEvent extends DomainEvent {
     occurredAt?: Date,
   ) {
     super(occurredAt);
-  }
-
-  getEventData(): Record<string, unknown> {
-    return {
-      testData: this.testData,
-      testNumber: this.testNumber,
-    };
   }
 }
 
@@ -72,15 +66,12 @@ describe('DomainEvent', () => {
     expect(event.eventVersion).toBe(1);
   });
 
-  it('getEventDataが正しくデータを返す', () => {
+  it('プロパティへの直接アクセスが可能（業界標準）', () => {
     const event = new TestDomainEvent('test data', 123);
 
-    const data = event.getEventData();
-
-    expect(data).toEqual({
-      testData: 'test data',
-      testNumber: 123,
-    });
+    // 業界標準：プロパティへの直接アクセス
+    expect(event.testData).toBe('test data');
+    expect(event.testNumber).toBe(123);
   });
 
   it('toJSONで完全なイベント情報を返す', () => {
@@ -94,10 +85,8 @@ describe('DomainEvent', () => {
       eventName: 'TestEvent',
       eventVersion: 1,
       occurredAt: '2024-01-01T12:00:00.000Z',
-      data: {
-        testData: 'test data',
-        testNumber: 456,
-      },
+      testData: 'test data',
+      testNumber: 456,
     });
   });
 
@@ -108,10 +97,6 @@ describe('DomainEvent', () => {
       constructor(public readonly value: string) {
         super();
       }
-
-      getEventData(): Record<string, unknown> {
-        return { value: this.value };
-      }
     }
 
     const event1 = new TestDomainEvent('data', 100);
@@ -119,8 +104,10 @@ describe('DomainEvent', () => {
 
     expect(event1.eventName).toBe('TestEvent');
     expect(event2.eventName).toBe('AnotherEvent');
-    expect(event1.getEventData()).toEqual({ testData: 'data', testNumber: 100 });
-    expect(event2.getEventData()).toEqual({ value: 'another data' });
+    // 業界標準：プロパティへの直接アクセス
+    expect(event1.testData).toBe('data');
+    expect(event1.testNumber).toBe(100);
+    expect(event2.value).toBe('another data');
   });
 
   it('イベントのプロパティが設定される', () => {

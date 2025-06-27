@@ -40,32 +40,15 @@ describe('UserAuthenticated', () => {
     expect(event).toBeInstanceOf(DomainEvent);
   });
 
-  it('getEventDataが正しいデータを返す', () => {
+  it('プロパティへの直接アクセスが可能（業界標準）', () => {
     const event = new UserAuthenticated('user-789', 'email', 'tier3', '10.0.0.1', 'Chrome/120.0');
 
-    const data = event.getEventData();
-
-    expect(data).toEqual({
-      userId: 'user-789',
-      provider: 'email',
-      userTier: 'tier3',
-      ipAddress: '10.0.0.1',
-      userAgent: 'Chrome/120.0',
-    });
-  });
-
-  it('getEventDataがオプショナルフィールドを含む', () => {
-    const event = new UserAuthenticated('user-123', 'google', 'tier1');
-
-    const data = event.getEventData();
-
-    expect(data).toEqual({
-      userId: 'user-123',
-      provider: 'google',
-      userTier: 'tier1',
-      ipAddress: undefined,
-      userAgent: undefined,
-    });
+    // 業界標準：プロパティへの直接アクセス
+    expect(event.userId).toBe('user-789');
+    expect(event.provider).toBe('email');
+    expect(event.userTier).toBe('tier3');
+    expect(event.ipAddress).toBe('10.0.0.1');
+    expect(event.userAgent).toBe('Chrome/120.0');
   });
 
   it('toJSONで完全なイベント情報を返す', () => {
@@ -85,13 +68,11 @@ describe('UserAuthenticated', () => {
       eventName: 'UserAuthenticated',
       eventVersion: 1,
       occurredAt: '2024-01-01T12:00:00.000Z',
-      data: {
-        userId: 'user-999',
-        provider: 'github',
-        userTier: 'tier2',
-        ipAddress: '172.16.0.1',
-        userAgent: 'Safari/17.0',
-      },
+      userId: 'user-999',
+      provider: 'github',
+      userTier: 'tier2',
+      ipAddress: '172.16.0.1',
+      userAgent: 'Safari/17.0',
     });
     expect(json['eventId']).toBeDefined();
   });
