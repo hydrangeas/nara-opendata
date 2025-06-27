@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { InMemoryEventBus } from './InMemoryEventBus';
-import type { IEventHandler, DomainEvent } from '@nara-opendata/shared-kernel';
+import type { IEventHandler, DomainEvent, ILogger } from '@nara-opendata/shared-kernel';
 
 // テスト用のイベントクラス
 class TestEvent implements DomainEvent {
@@ -55,19 +55,21 @@ class TestEventHandler implements IEventHandler<TestEvent> {
   }
 }
 
+// モックロガーの作成
+const createMockLogger = (): ILogger => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+});
+
 describe('InMemoryEventBus', () => {
   let eventBus: InMemoryEventBus;
-  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+  let mockLogger: ILogger;
 
   beforeEach(() => {
-    eventBus = new InMemoryEventBus();
-    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {
-      // Mock implementation - intentionally empty
-    });
-  });
-
-  afterEach(() => {
-    consoleErrorSpy.mockRestore();
+    mockLogger = createMockLogger();
+    eventBus = new InMemoryEventBus(mockLogger);
   });
 
   describe('subscribe', () => {
@@ -212,9 +214,14 @@ describe('InMemoryEventBus', () => {
 
       expect(handler1.handleMock).toHaveBeenCalled();
       expect(handler2.handleMock).toHaveBeenCalled();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Error in event handler for TestEvent:',
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Error in event handler for TestEvent',
         expect.any(Error),
+        expect.objectContaining({
+          eventId: event.eventId,
+          eventName: 'TestEvent',
+          errorMessage: 'Handler 1 error',
+        }),
       );
     });
   });
