@@ -69,7 +69,7 @@ describe('InMemoryEventBus', () => {
 
   beforeEach(() => {
     mockLogger = createMockLogger();
-    eventBus = new InMemoryEventBus(mockLogger);
+    eventBus = new InMemoryEventBus(undefined, mockLogger); // config is first parameter now
   });
 
   describe('subscribe', () => {
@@ -216,10 +216,11 @@ describe('InMemoryEventBus', () => {
       expect(handler2.handleMock).toHaveBeenCalled();
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Error in event handler for TestEvent',
-        expect.any(Error),
+        expect.any(Object), // EventBusError
         expect.objectContaining({
           eventId: event.eventId,
           eventName: 'TestEvent',
+          errorType: 'HANDLER_ERROR',
           errorMessage: 'Handler 1 error',
         }),
       );

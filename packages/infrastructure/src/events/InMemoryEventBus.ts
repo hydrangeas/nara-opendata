@@ -1,5 +1,8 @@
 import type { IEventBus, IEventHandler, DomainEvent, ILogger } from '@nara-opendata/shared-kernel';
 import { ConsoleLogger } from '../logging';
+import type { IEventBusConfig } from './EventBusConfig';
+import { defaultEventBusConfig } from './EventBusConfig';
+import { EventBusError, EventBusErrorType } from './EventBusError';
 
 /**
  * インメモリーイベントバス実装
@@ -35,13 +38,21 @@ export class InMemoryEventBus implements IEventBus {
   private pendingEvents: DomainEvent[] = [];
   private isDispatching = false;
   private readonly logger: ILogger;
+  private readonly config: Required<IEventBusConfig>;
+  private currentCycle = 0;
 
   /**
    * InMemoryEventBusのインスタンスを作成します
+   * @param config イベントバスの設定（省略時はデフォルト設定を使用）
    * @param logger ロガーインスタンス（省略時はConsoleLoggerを使用）
    */
-  constructor(logger?: ILogger) {
+  constructor(config?: IEventBusConfig, logger?: ILogger) {
+    this.config = { ...defaultEventBusConfig, ...config };
     this.logger = logger || new ConsoleLogger('InMemoryEventBus');
+
+    if (this.config.debugMode) {
+      this.logger.debug('InMemoryEventBus initialized', { config: this.config });
+    }
   }
 
   /**
@@ -57,13 +68,20 @@ export class InMemoryEventBus implements IEventBus {
     // 同じハンドラーが既に登録されていないかチェック
     // Note: as演算子を使用して型の互換性を保証
     if (handlers.includes(handler as IEventHandler<DomainEvent>)) {
-      this.logger.debug(`Handler already registered for event: ${eventName}`);
+      if (this.config.debugMode) {
+        this.logger.debug(`Handler already registered for event: ${eventName}`);
+      }
       return;
     }
 
     handlers.push(handler as IEventHandler<DomainEvent>);
     this.handlers.set(eventName, handlers);
-    this.logger.debug(`Handler registered for event: ${eventName}`);
+
+    if (this.config.debugMode) {
+      this.logger.debug(`Handler registered for event: ${eventName}`, {
+        handlerCount: handlers.length,
+      });
+    }
   }
 
   /**
@@ -76,22 +94,33 @@ export class InMemoryEventBus implements IEventBus {
   unsubscribe<T extends DomainEvent>(eventName: string, handler: IEventHandler<T>): void {
     const handlers = this.handlers.get(eventName);
     if (!handlers) {
-      this.logger.debug(`No handlers registered for event: ${eventName}`);
+      if (this.config.debugMode) {
+        this.logger.debug(`No handlers registered for event: ${eventName}`);
+      }
       return;
     }
 
     const index = handlers.indexOf(handler as IEventHandler<DomainEvent>);
     if (index !== -1) {
       handlers.splice(index, 1);
-      this.logger.debug(`Handler unregistered for event: ${eventName}`);
+
+      if (this.config.debugMode) {
+        this.logger.debug(`Handler unregistered for event: ${eventName}`, {
+          remainingHandlers: handlers.length,
+        });
+      }
 
       // ハンドラーが空になった場合はMapから削除
       if (handlers.length === 0) {
         this.handlers.delete(eventName);
-        this.logger.debug(`All handlers removed for event: ${eventName}`);
+        if (this.config.debugMode) {
+          this.logger.debug(`All handlers removed for event: ${eventName}`);
+        }
       }
     } else {
-      this.logger.debug(`Handler not found for event: ${eventName}`);
+      if (this.config.debugMode) {
+        this.logger.debug(`Handler not found for event: ${eventName}`);
+      }
     }
   }
 
@@ -123,14 +152,30 @@ export class InMemoryEventBus implements IEventBus {
    * @remarks
    * - 遅延ディスパッチ機能により、現在の実行コンテキストが終了してから配信されます
    * - イベントハンドラー内で新たなイベントを発行した場合、それらも同じサイクルで処理されます
+   * @throws {EventBusError} イベント数が上限を超えた場合
    */
   async publish(event: DomainEvent): Promise<void> {
+    // イベント数の上限チェック
+    if (this.pendingEvents.length >= this.config.maxEventsPerCycle) {
+      throw new EventBusError(
+        EventBusErrorType.MAX_EVENTS_EXCEEDED,
+        `Maximum events per cycle (${this.config.maxEventsPerCycle}) exceeded`,
+        event.eventName,
+        event.eventId,
+      );
+    }
+
     this.pendingEvents.push(event);
-    this.logger.debug(`Event queued for dispatch: ${event.eventName}`, {
-      eventId: event.eventId,
-    });
+
+    if (this.config.debugMode) {
+      this.logger.debug(`Event queued for dispatch: ${event.eventName}`, {
+        eventId: event.eventId,
+        pendingCount: this.pendingEvents.length,
+      });
+    }
 
     if (!this.isDispatching) {
+      this.currentCycle = 0;
       await this.dispatchPendingEvents();
     }
   }
@@ -140,15 +185,29 @@ export class InMemoryEventBus implements IEventBus {
    *
    * @param events 発行するドメインイベントの配列
    * @remarks 遅延ディスパッチ機能により、すべてのイベントが同じサイクルで配信されます
+   * @throws {EventBusError} イベント数が上限を超えた場合
    */
   async publishAll(events: DomainEvent[]): Promise<void> {
+    // イベント数の上限チェック
+    if (this.pendingEvents.length + events.length > this.config.maxEventsPerCycle) {
+      throw new EventBusError(
+        EventBusErrorType.MAX_EVENTS_EXCEEDED,
+        `Maximum events per cycle (${this.config.maxEventsPerCycle}) would be exceeded`,
+      );
+    }
+
     this.pendingEvents.push(...events);
-    this.logger.debug(`Multiple events queued for dispatch`, {
-      eventCount: events.length,
-      eventNames: events.map((e) => e.eventName),
-    });
+
+    if (this.config.debugMode) {
+      this.logger.debug(`Multiple events queued for dispatch`, {
+        eventCount: events.length,
+        eventNames: events.map((e) => e.eventName),
+        totalPending: this.pendingEvents.length,
+      });
+    }
 
     if (!this.isDispatching) {
+      this.currentCycle = 0;
       await this.dispatchPendingEvents();
     }
   }
@@ -159,31 +218,49 @@ export class InMemoryEventBus implements IEventBus {
    * @remarks
    * - エラーが発生しても他のハンドラーの実行は継続します
    * - イベントハンドラー内で新たなイベントが発行された場合、同じサイクルで処理されます
+   * @throws {EventBusError} ディスパッチサイクルが上限を超えた場合
    */
   private async dispatchPendingEvents(): Promise<void> {
     this.isDispatching = true;
-    let dispatchedCount = 0;
+    let totalDispatchedCount = 0;
 
     try {
       // Promise.resolve()で非同期実行を保証
       await Promise.resolve();
 
       while (this.pendingEvents.length > 0) {
+        // サイクル数の上限チェック
+        if (this.currentCycle >= this.config.maxDispatchCycles) {
+          const remainingEvents = this.pendingEvents.length;
+          this.pendingEvents = []; // 残りのイベントをクリア
+
+          throw new EventBusError(
+            EventBusErrorType.MAX_CYCLES_EXCEEDED,
+            `Maximum dispatch cycles (${this.config.maxDispatchCycles}) exceeded. ${remainingEvents} events were dropped.`,
+          );
+        }
+
+        this.currentCycle++;
         const events = [...this.pendingEvents];
         this.pendingEvents = [];
 
-        this.logger.debug(`Dispatching events`, {
-          eventCount: events.length,
-          eventNames: events.map((e) => e.eventName),
-        });
+        if (this.config.debugMode) {
+          this.logger.debug(`Dispatching events in cycle ${this.currentCycle}`, {
+            eventCount: events.length,
+            eventNames: events.map((e) => e.eventName),
+          });
+        }
 
+        let cycleDispatchedCount = 0;
         for (const event of events) {
           const handlers = this.handlers.get(event.eventName) || [];
 
           if (handlers.length === 0) {
-            this.logger.debug(`No handlers for event: ${event.eventName}`, {
-              eventId: event.eventId,
-            });
+            if (this.config.debugMode) {
+              this.logger.debug(`No handlers for event: ${event.eventName}`, {
+                eventId: event.eventId,
+              });
+            }
             continue;
           }
 
@@ -192,15 +269,26 @@ export class InMemoryEventBus implements IEventBus {
 
           // すべてのハンドラーの実行を待つが、エラーがあっても続行
           await Promise.allSettled(handlerPromises);
-          dispatchedCount++;
+          cycleDispatchedCount++;
+        }
+
+        totalDispatchedCount += cycleDispatchedCount;
+
+        if (this.config.debugMode) {
+          this.logger.debug(`Cycle ${this.currentCycle} completed`, {
+            dispatchedInCycle: cycleDispatchedCount,
+            totalDispatched: totalDispatchedCount,
+          });
         }
       }
 
-      this.logger.debug(`Event dispatch completed`, {
-        dispatchedCount,
+      this.logger.info(`Event dispatch completed`, {
+        totalCycles: this.currentCycle,
+        totalDispatched: totalDispatchedCount,
       });
     } finally {
       this.isDispatching = false;
+      this.currentCycle = 0;
     }
   }
 
@@ -216,16 +304,46 @@ export class InMemoryEventBus implements IEventBus {
     event: DomainEvent,
   ): Promise<void> {
     try {
-      await handler.handle(event);
-      this.logger.debug(`Event handler executed successfully`, {
-        eventName: event.eventName,
-        eventId: event.eventId,
+      // タイムアウトPromiseを作成
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(
+            new EventBusError(
+              EventBusErrorType.HANDLER_TIMEOUT,
+              `Handler timeout after ${this.config.handlerTimeoutMs}ms`,
+              event.eventName,
+              event.eventId,
+            ),
+          );
+        }, this.config.handlerTimeoutMs);
       });
+
+      // ハンドラー実行とタイムアウトをrace
+      await Promise.race([handler.handle(event), timeoutPromise]);
+
+      if (this.config.debugMode) {
+        this.logger.debug(`Event handler executed successfully`, {
+          eventName: event.eventName,
+          eventId: event.eventId,
+        });
+      }
     } catch (error) {
       // エラーが発生してもイベント処理全体は継続
-      this.logger.error(`Error in event handler for ${event.eventName}`, error, {
+      const eventBusError =
+        error instanceof EventBusError
+          ? error
+          : new EventBusError(
+              EventBusErrorType.HANDLER_ERROR,
+              `Error in event handler for ${event.eventName}`,
+              event.eventName,
+              event.eventId,
+              error,
+            );
+
+      this.logger.error(eventBusError.message, eventBusError, {
         eventId: event.eventId,
         eventName: event.eventName,
+        errorType: eventBusError.type,
         errorMessage: error instanceof Error ? error.message : String(error),
       });
     }
