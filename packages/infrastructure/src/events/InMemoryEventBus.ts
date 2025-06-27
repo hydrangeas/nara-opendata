@@ -296,7 +296,10 @@ export class InMemoryEventBus implements IEventBus {
           // 各ハンドラーを並列実行
           // パフォーマンス最適化: 1つのハンドラーの場合は配列作成を避ける
           if (handlers.length === 1) {
-            await this.executeHandler(handlers[0]!, event);
+            const firstHandler = handlers[0];
+            if (firstHandler) {
+              await this.executeHandler(firstHandler, event);
+            }
           } else {
             const handlerPromises = handlers.map((handler) => this.executeHandler(handler, event));
             // すべてのハンドラーの実行を待つが、エラーがあっても続行
