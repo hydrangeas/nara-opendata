@@ -13,12 +13,24 @@ import { EventBusError, EventBusErrorType } from './EventBusError';
  * - 遅延ディスパッチ: イベントは現在の実行コンテキストが終了してから配信されます
  * - エラー分離: 個別のハンドラーでエラーが発生しても他のハンドラーは実行されます
  * - 重複防止: 同じハンドラーインスタンスは重複登録されません
+ * - 設定可能な制限: サイクル数、イベント数、タイムアウトを設定可能
+ * - デバッグモード: 詳細なログ出力をサポート
+ *
+ * ## パフォーマンス特性
+ * - ハンドラー検索: O(1) - イベント名でのハッシュマップ検索
+ * - イベント発行: O(n) - nはハンドラー数
+ * - メモリ使用量: ハンドラー数とペンディングイベント数に比例
+ *
+ * ## スレッドセーフティ
+ * この実装はシングルスレッド環境（Node.js）を想定しています。
+ * 並行処理は非同期処理として扱われ、イベントループによって安全に処理されます。
  *
  * ## メモリ管理
- * ハンドラーは明示的にunsubscribeされるか、clearAllHandlersが呼ばれるまで保持されます。
- * 不要になったハンドラーは必ずunsubscribeしてメモリリークを防いでください。
+ * - ハンドラーは明示的にunsubscribeされるか、clearAllHandlersが呼ばれるまで保持されます
+ * - 不要になったハンドラーは必ずunsubscribeしてメモリリークを防いでください
+ * - maxEventsPerCycleを適切に設定して、メモリ使用量を制限してください
  *
- * @example
+ * @example 基本的な使用方法
  * ```typescript
  * const eventBus = new InMemoryEventBus();
  * const handler = new MyEventHandler();
@@ -31,6 +43,18 @@ import { EventBusError, EventBusErrorType } from './EventBusError';
  *
  * // 不要になったらハンドラーを解除
  * eventBus.unsubscribe('UserCreated', handler);
+ * ```
+ *
+ * @example カスタム設定での使用
+ * ```typescript
+ * const config: IEventBusConfig = {
+ *   maxDispatchCycles: 5,
+ *   maxEventsPerCycle: 100,
+ *   handlerTimeoutMs: 5000,
+ *   debugMode: true,
+ * };
+ *
+ * const eventBus = new InMemoryEventBus(config, logger);
  * ```
  */
 export class InMemoryEventBus implements IEventBus {
@@ -63,19 +87,24 @@ export class InMemoryEventBus implements IEventBus {
    * @remarks 同じハンドラーインスタンスが既に登録されている場合は何もしません
    */
   subscribe<T extends DomainEvent>(eventName: string, handler: IEventHandler<T>): void {
-    const handlers = this.handlers.get(eventName) || [];
+    let handlers = this.handlers.get(eventName);
 
-    // 同じハンドラーが既に登録されていないかチェック
-    // Note: as演算子を使用して型の互換性を保証
-    if (handlers.includes(handler as IEventHandler<DomainEvent>)) {
-      if (this.config.debugMode) {
-        this.logger.debug(`Handler already registered for event: ${eventName}`);
+    if (!handlers) {
+      // 新しいイベントタイプの場合、配列を作成
+      handlers = [];
+      this.handlers.set(eventName, handlers);
+    } else {
+      // 同じハンドラーが既に登録されていないかチェック
+      // Note: as演算子を使用して型の互換性を保証
+      if (handlers.includes(handler as IEventHandler<DomainEvent>)) {
+        if (this.config.debugMode) {
+          this.logger.debug(`Handler already registered for event: ${eventName}`);
+        }
+        return;
       }
-      return;
     }
 
     handlers.push(handler as IEventHandler<DomainEvent>);
-    this.handlers.set(eventName, handlers);
 
     if (this.config.debugMode) {
       this.logger.debug(`Handler registered for event: ${eventName}`, {
@@ -253,9 +282,9 @@ export class InMemoryEventBus implements IEventBus {
 
         let cycleDispatchedCount = 0;
         for (const event of events) {
-          const handlers = this.handlers.get(event.eventName) || [];
+          const handlers = this.handlers.get(event.eventName);
 
-          if (handlers.length === 0) {
+          if (!handlers || handlers.length === 0) {
             if (this.config.debugMode) {
               this.logger.debug(`No handlers for event: ${event.eventName}`, {
                 eventId: event.eventId,
@@ -265,10 +294,14 @@ export class InMemoryEventBus implements IEventBus {
           }
 
           // 各ハンドラーを並列実行
-          const handlerPromises = handlers.map((handler) => this.executeHandler(handler, event));
-
-          // すべてのハンドラーの実行を待つが、エラーがあっても続行
-          await Promise.allSettled(handlerPromises);
+          // パフォーマンス最適化: 1つのハンドラーの場合は配列作成を避ける
+          if (handlers.length === 1) {
+            await this.executeHandler(handlers[0], event);
+          } else {
+            const handlerPromises = handlers.map((handler) => this.executeHandler(handler, event));
+            // すべてのハンドラーの実行を待つが、エラーがあっても続行
+            await Promise.allSettled(handlerPromises);
+          }
           cycleDispatchedCount++;
         }
 
