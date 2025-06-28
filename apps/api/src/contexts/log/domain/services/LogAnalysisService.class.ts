@@ -1,7 +1,9 @@
+import { injectable, inject } from 'tsyringe';
 import type { UserId } from '@nara-opendata/shared-kernel';
 import type { IAuthLogRepository, IAPILogRepository } from '../repositories';
 import type { TimeRange, StatsCriteria } from '../value-objects';
 import { AuthResultValue, createAuthResult } from '../value-objects';
+import { TYPES } from '../../../../types/di';
 
 /**
  * ログ分析結果の型定義
@@ -43,13 +45,18 @@ export interface IUserActivityStats {
 }
 
 /**
- * ログ分析ドメインサービス
+ * ログ分析ドメインサービス（クラス版）
  * 認証ログとAPIログの統合的な分析機能を提供
+ *
+ * @remarks
+ * DIコンテナで使用するためにクラスとして実装
+ * 元のクラス版と同じインターフェースを提供
  */
-export class LogAnalysisService {
+@injectable()
+export class LogAnalysisServiceClass {
   constructor(
-    private readonly authLogRepository: IAuthLogRepository,
-    private readonly apiLogRepository: IAPILogRepository,
+    @inject(TYPES.IAuthLogRepository) private readonly authLogRepository: IAuthLogRepository,
+    @inject(TYPES.IAPILogRepository) private readonly apiLogRepository: IAPILogRepository,
   ) {}
 
   /**
@@ -243,6 +250,3 @@ export class LogAnalysisService {
     return Math.max(0, Math.round(score));
   }
 }
-
-// Re-export the class-based version for DI
-export { LogAnalysisServiceClass } from './LogAnalysisService.class';

@@ -4,7 +4,9 @@
     "rootDir": "./src",
     "outDir": "./dist",
     "composite": true,
-    "noEmit": true
+    "noEmit": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"],
@@ -12,6 +14,7 @@
     { "path": "../../packages/shared-kernel" },
     { "path": "../../packages/libs/types" },
     { "path": "../../packages/libs/validation" },
-    { "path": "../../packages/libs/utils" }
+    { "path": "../../packages/libs/utils" },
+    { "path": "../../packages/infrastructure" }
   ]
 }

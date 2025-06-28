@@ -1,3 +1,4 @@
+import { injectable } from 'tsyringe';
 import { createFilePath } from '../value-objects/FilePath';
 import type { ContentType } from '../value-objects/ContentType';
 import { createContentType } from '../value-objects/ContentType';
@@ -5,19 +6,25 @@ import type { OpenDataResource } from '../value-objects/OpenDataResource';
 import { isResourceAccessible } from '../value-objects/OpenDataResource';
 
 /**
- * データアクセスのビジネスロジックを提供するドメインサービス
+ * データアクセスのビジネスロジックを提供するドメインサービス（クラス版）
+ *
+ * @remarks
+ * DIコンテナで使用するためにインスタンスメソッドとして実装
+ * 元の静的メソッド版と同じインターフェースを提供
  */
-export class DataAccessService {
+@injectable()
+export class DataAccessServiceClass {
   // デフォルトの最大ファイルサイズ（100MB）
   // TODO: 将来的にプロジェクト固有の設定として外部化を検討
-  // その際は、コンストラクタインジェクションでの設定値受け取りを推奨
-  private static readonly DEFAULT_MAX_FILE_SIZE = 100 * 1024 * 1024;
+  private readonly DEFAULT_MAX_FILE_SIZE = 100 * 1024 * 1024;
+
+  constructor() {}
 
   /**
    * リソースパスを検証する
    * @throws {PathTraversalException} パストラバーサルが検出された場合
    */
-  static validateResourcePath(path: string): void {
+  validateResourcePath(path: string): void {
     // createFilePathの検証を利用
     createFilePath(path);
   }
@@ -25,7 +32,7 @@ export class DataAccessService {
   /**
    * リソースへのアクセスを検証する
    */
-  static validateAccess(
+  validateAccess(
     resource: OpenDataResource,
     options: { maxFileSizeBytes?: number } = {},
   ): { allowed: boolean; reason?: string } {
@@ -48,7 +55,7 @@ export class DataAccessService {
   /**
    * ベースパスとファイルパスを結合する
    */
-  static buildResourcePath(basePath: string, filePath: string): string {
+  buildResourcePath(basePath: string, filePath: string): string {
     // 両端のスラッシュを正規化
     const normalizedBase = basePath.replace(/\/$/, '');
     const normalizedFile = filePath.replace(/^\//, '');
@@ -63,7 +70,7 @@ export class DataAccessService {
   /**
    * ファイルパスから適切なコンテンツタイプを推測する
    */
-  static getContentTypeFromPath(path: string): ContentType {
+  getContentTypeFromPath(path: string): ContentType {
     // 複合拡張子を先にチェック
     const lowerPath = path.toLowerCase();
     if (lowerPath.endsWith('.tar.gz')) return createContentType('application/gzip');
@@ -97,6 +104,3 @@ export class DataAccessService {
     return createContentType(contentType);
   }
 }
-
-// Re-export the class-based version for DI
-export { DataAccessServiceClass } from './DataAccessService.class';

@@ -1,3 +1,4 @@
+import { injectable, inject } from 'tsyringe';
 import type { TierLevel } from '@nara-opendata/shared-kernel';
 import {
   getUserTierLevel,
@@ -9,13 +10,21 @@ import type { IRateLimitRepository } from '../repositories';
 import { RateLimitException } from '../exceptions/RateLimitException';
 import { createRateLimitLog, getRateLimitLogRequestedAt } from '../entities/RateLimitLog';
 import { createEndpoint, type APIUser, getAPIUserId, getAPIUserTier } from '../value-objects';
+import { TYPES } from '../../../../types/di';
 
 /**
- * APIアクセス制御のドメインサービス
+ * APIアクセス制御のドメインサービス（クラス版）
  * レート制限とティアアクセス検証を提供
+ *
+ * @remarks
+ * DIコンテナで使用するためにクラスとして実装
+ * 元のクラス版と同じインターフェースを提供
  */
-export class APIAccessControlService {
-  constructor(private readonly rateLimitRepository: IRateLimitRepository) {}
+@injectable()
+export class APIAccessControlServiceClass {
+  constructor(
+    @inject(TYPES.IRateLimitRepository) private readonly rateLimitRepository: IRateLimitRepository,
+  ) {}
 
   /**
    * ユーザーのレート制限をチェックする
@@ -78,6 +87,3 @@ export class APIAccessControlService {
     return getTierHierarchy(userLevel) >= getTierHierarchy(requiredTier);
   }
 }
-
-// Re-export the class-based version for DI
-export { APIAccessControlServiceClass } from './APIAccessControlService.class';

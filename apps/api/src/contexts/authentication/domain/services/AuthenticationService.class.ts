@@ -1,7 +1,9 @@
+import { injectable, inject } from 'tsyringe';
 import {
   createUserId,
   TierLevel,
   calculateRetryAfterSecondsFromResetTime,
+  type ILogger,
 } from '@nara-opendata/shared-kernel';
 import type { AuthenticatedUser } from '../value-objects/AuthenticatedUser';
 import {
@@ -14,104 +16,15 @@ import {
   getRateLimitWindowSeconds,
   getRateLimitValue,
 } from '../value-objects/RateLimit';
-
-/**
- * JWTトークンのペイロード型
- */
-export interface IJWTPayload {
-  sub: string;
-  email?: string;
-  app_metadata?: {
-    tier?: string;
-    custom_rate_limit?: {
-      limit: number;
-      window_seconds: number;
-    };
-  };
-  exp?: number;
-  iat?: number;
-}
-
-/**
- * トークン検証エラーの理由
- */
-export type TokenErrorReason = 'expired' | 'not_yet_valid' | 'missing_exp';
-
-/**
- * ペイロード検証エラーの理由
- */
-export type PayloadErrorReason = 'invalid_user_id';
-
-/**
- * 認証エラーの理由（すべて）
- */
-export type AuthenticationErrorReason = TokenErrorReason | PayloadErrorReason;
-
-/**
- * 認証エラー情報
- */
-export interface IAuthenticationError {
-  type: 'INVALID_TOKEN' | 'INVALID_PAYLOAD';
-  reason: AuthenticationErrorReason;
-  message: string;
-  details?: {
-    exp?: number | undefined; // トークンの有効期限（UNIX時刻）
-    iat?: number | undefined; // トークンの発行時刻（UNIX時刻）
-    now?: number | undefined; // 検証時の現在時刻（UNIX時刻）
-    error?: unknown | undefined; // その他のエラー情報
-  };
-}
-
-/**
- * レート制限の確認結果
- */
-export interface IRateLimitCheckResult {
-  /** リクエストが許可されるかどうか */
-  allowed: boolean;
-  /** 現在のリクエスト数 */
-  currentCount: number;
-  /** レート制限の上限値 */
-  limit: number;
-  /** レート制限がリセットされる時刻 */
-  resetTime: Date;
-  /** リセットまでの残り秒数 */
-  remainingSeconds: number;
-  /** 残りリクエスト可能数（制限に達している場合は0） */
-  remainingRequests: number;
-}
-
-/**
- * レート制限の状態（永続化層で管理される情報）
- */
-export interface IRateLimitState {
-  /** ユーザーID */
-  userId: string;
-  /** 現在のウィンドウでのリクエスト数 */
-  requestCount: number;
-  /** 現在のウィンドウの開始時刻 */
-  windowStartTime: Date;
-}
-
-/**
- * 認証成功時の結果
- */
-export interface IAuthenticationSuccess {
-  success: true;
-  user: AuthenticatedUser;
-}
-
-/**
- * 認証失敗時の結果
- */
-export interface IAuthenticationFailure {
-  success: false;
-  error: IAuthenticationError;
-}
-
-/**
- * 認証処理の結果
- */
-export type AuthenticationResult = IAuthenticationSuccess | IAuthenticationFailure;
+import { TYPES } from '../../../../types/di';
+import type {
+  IJWTPayload,
+  TokenErrorReason,
+  AuthenticationErrorReason,
+  IRateLimitCheckResult,
+  IRateLimitState,
+  AuthenticationResult,
+} from './AuthenticationService';
 
 /**
  * 文字列からTierLevelへの安全な変換（判別共用体を使用）
@@ -158,27 +71,16 @@ function getErrorMessage(reason: AuthenticationErrorReason): string {
 }
 
 /**
- * 認証結果が成功かどうかを判定する型ガード
+ * 認証に関するドメインサービス（クラス版）
+ *
+ * @remarks
+ * DIコンテナで使用するためにクラスとして実装
+ * 元のオブジェクトリテラル版と同じインターフェースを提供
  */
-export function isAuthenticationSuccess(
-  result: AuthenticationResult,
-): result is IAuthenticationSuccess {
-  return result.success === true;
-}
+@injectable()
+export class AuthenticationServiceClass {
+  constructor(@inject(TYPES.ILogger) private readonly logger: ILogger) {}
 
-/**
- * 認証結果が失敗かどうかを判定する型ガード
- */
-export function isAuthenticationFailure(
-  result: AuthenticationResult,
-): result is IAuthenticationFailure {
-  return result.success === false;
-}
-
-/**
- * 認証に関するドメインサービス
- */
-export const AuthenticationService = {
   /**
    * JWTペイロードから検証済みのAuthenticatedUserを作成する
    * @returns 成功時はAuthenticatedUser、失敗時はエラー情報を含むResult型
@@ -220,8 +122,7 @@ export const AuthenticationService = {
 
       // 警告があればログ出力
       if (tierResult.warning) {
-        // TODO: 本番環境では構造化ログを使用すべき
-        console.warn(tierResult.warning);
+        this.logger.warn(tierResult.warning);
       }
 
       const rateLimit = createDefaultRateLimit(tierResult.level);
@@ -243,7 +144,7 @@ export const AuthenticationService = {
         },
       };
     }
-  },
+  }
 
   /**
    * トークンの時刻関連の有効性を包括的に検証する
@@ -292,59 +193,74 @@ export const AuthenticationService = {
     }
 
     return { isValid: true };
-  },
+  }
 
   /**
    * レート制限を確認する（改善版）
    * @param user - 認証済みユーザー
-   * @param state - 現在のレート制限状態
-   * @returns 詳細な制限情報を含む結果
+   * @param rateLimitState - レート制限の現在の状態
+   * @param currentTime - 現在時刻（テスト用にオプショナル）
+   * @returns レート制限の確認結果
    */
-  checkRateLimitWithState(user: AuthenticatedUser, state: IRateLimitState): IRateLimitCheckResult {
-    const now = new Date();
-    const userRateLimit = getAuthenticatedUserRateLimit(user);
-    const windowSeconds = getRateLimitWindowSeconds(userRateLimit);
-    const limit = getRateLimitValue(userRateLimit);
-    const windowEndTime = new Date(state.windowStartTime.getTime() + windowSeconds * 1000);
+  checkRateLimit(
+    user: AuthenticatedUser,
+    rateLimitState: IRateLimitState | null,
+    currentTime: Date = new Date(),
+  ): IRateLimitCheckResult {
+    const rateLimit = getAuthenticatedUserRateLimit(user);
+    const limit = getRateLimitValue(rateLimit);
+    const windowSeconds = getRateLimitWindowSeconds(rateLimit);
 
-    // ウィンドウが過ぎている場合は新しいウィンドウとして扱う
-    if (now >= windowEndTime) {
-      const newResetTime = new Date(now.getTime() + windowSeconds * 1000);
+    // 新規ユーザーまたは記録がない場合
+    if (!rateLimitState) {
       return {
         allowed: true,
         currentCount: 0,
         limit,
-        resetTime: newResetTime,
+        resetTime: new Date(currentTime.getTime() + windowSeconds * 1000),
         remainingSeconds: windowSeconds,
         remainingRequests: limit,
       };
     }
 
-    // 現在のウィンドウ内でのチェック
-    const allowed = state.requestCount < limit;
-    const remainingSeconds = Math.max(
-      0,
-      Math.ceil((windowEndTime.getTime() - now.getTime()) / 1000),
-    );
-    const remainingRequests = Math.max(0, limit - state.requestCount);
+    // ウィンドウの計算
+    const windowStartTime = rateLimitState.windowStartTime;
+    const windowEndTime = new Date(windowStartTime.getTime() + windowSeconds * 1000);
 
+    // 現在のウィンドウ内の場合
+    if (currentTime < windowEndTime) {
+      const remainingSeconds = Math.ceil((windowEndTime.getTime() - currentTime.getTime()) / 1000);
+      const allowed = rateLimitState.requestCount < limit;
+      const remainingRequests = Math.max(0, limit - rateLimitState.requestCount);
+
+      return {
+        allowed,
+        currentCount: rateLimitState.requestCount,
+        limit,
+        resetTime: windowEndTime,
+        remainingSeconds,
+        remainingRequests,
+      };
+    }
+
+    // ウィンドウが経過している場合（新しいウィンドウ）
     return {
-      allowed,
-      currentCount: state.requestCount,
+      allowed: true,
+      currentCount: 0,
       limit,
-      resetTime: windowEndTime,
-      remainingSeconds,
-      remainingRequests,
+      resetTime: new Date(currentTime.getTime() + windowSeconds * 1000),
+      remainingSeconds: windowSeconds,
+      remainingRequests: limit,
     };
-  },
+  }
 
   /**
-   * 次のリクエストが可能になるまでの秒数を計算する
+   * レート制限エラー時のretry-after秒数を計算する
+   * @param resetTime - レート制限がリセットされる時刻
+   * @param currentTime - 現在時刻（テスト用にオプショナル）
+   * @returns retry-after秒数（最小1秒）
    */
-  calculateRetryAfterSeconds(resetTime: Date): number {
-    return calculateRetryAfterSecondsFromResetTime(resetTime);
-  },
-} as const;
-
-// Re-export the class-based version for DI
-export { AuthenticationServiceClass } from './AuthenticationService.class';
+  calculateRetryAfterSeconds(resetTime: Date, currentTime: Date = new Date()): number {
+    return calculateRetryAfterSecondsFromResetTime(resetTime, currentTime);
+  }
+}
