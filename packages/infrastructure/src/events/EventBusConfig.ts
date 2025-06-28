@@ -52,3 +52,39 @@ export const defaultEventBusConfig: Required<IEventBusConfig> = {
   handlerTimeoutMs: 30000,
   debugMode: false,
 };
+
+/**
+ * イベントバス設定の妥当性を検証します
+ *
+ * @param config 検証する設定
+ * @throws {Error} 設定値が不正な場合
+ */
+export function validateEventBusConfig(config: Partial<IEventBusConfig>): void {
+  if (config.maxDispatchCycles !== undefined) {
+    if (config.maxDispatchCycles < 1) {
+      throw new Error('maxDispatchCycles must be at least 1');
+    }
+    if (config.maxDispatchCycles > 100) {
+      throw new Error('maxDispatchCycles should not exceed 100 to prevent infinite loops');
+    }
+  }
+
+  if (config.maxEventsPerCycle !== undefined) {
+    if (config.maxEventsPerCycle < 1) {
+      throw new Error('maxEventsPerCycle must be at least 1');
+    }
+    if (config.maxEventsPerCycle > 10000) {
+      throw new Error('maxEventsPerCycle should not exceed 10000 to prevent memory issues');
+    }
+  }
+
+  if (config.handlerTimeoutMs !== undefined) {
+    if (config.handlerTimeoutMs < 0) {
+      throw new Error('handlerTimeoutMs must be non-negative');
+    }
+    if (config.handlerTimeoutMs > 300000) {
+      // 5分
+      throw new Error('handlerTimeoutMs should not exceed 5 minutes (300000ms)');
+    }
+  }
+}

@@ -8,7 +8,7 @@ import type {
 } from '@nara-opendata/shared-kernel';
 import { ConsoleLogger } from '../logging';
 import type { IEventBusConfig } from './EventBusConfig';
-import { defaultEventBusConfig } from './EventBusConfig';
+import { defaultEventBusConfig, validateEventBusConfig } from './EventBusConfig';
 import { EventBusError, EventBusErrorType } from './EventBusError';
 
 /**
@@ -78,6 +78,11 @@ export class InMemoryEventBus implements IEventBus {
    * @param logger ロガーインスタンス（省略時はConsoleLoggerを使用）
    */
   constructor(config?: IEventBusConfig, logger?: ILogger) {
+    // 設定値の妥当性を検証
+    if (config) {
+      validateEventBusConfig(config);
+    }
+
     this.config = { ...defaultEventBusConfig, ...config };
     this.logger = logger || new ConsoleLogger('InMemoryEventBus');
 
@@ -346,10 +351,12 @@ export class InMemoryEventBus implements IEventBus {
     handler: IEventHandler<DomainEvent>,
     event: DomainEvent,
   ): Promise<void> {
+    let timeoutId: NodeJS.Timeout | undefined;
+
     try {
       // タイムアウトPromiseを作成
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => {
+        timeoutId = setTimeout(() => {
           reject(
             new EventBusError(
               EventBusErrorType.HANDLER_TIMEOUT,
@@ -389,6 +396,11 @@ export class InMemoryEventBus implements IEventBus {
         errorType: eventBusError.type,
         errorMessage: error instanceof Error ? error.message : String(error),
       });
+    } finally {
+      // タイマーを必ずクリア（メモリリーク防止）
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     }
   }
 }
