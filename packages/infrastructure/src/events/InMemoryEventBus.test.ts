@@ -1,46 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { InMemoryEventBus } from './InMemoryEventBus';
-import type { IEventHandler, DomainEvent, ILogger } from '@nara-opendata/shared-kernel';
-
-// テスト用のイベントクラス
-class TestEvent implements DomainEvent {
-  public readonly eventId = 'test-event-id';
-  public readonly eventName = 'TestEvent';
-  public readonly occurredAt = new Date();
-  public readonly eventVersion = 1;
-
-  constructor(public readonly data: string) {}
-
-  toJSON(): Record<string, unknown> {
-    return {
-      eventId: this.eventId,
-      eventName: this.eventName,
-      occurredAt: this.occurredAt.toISOString(),
-      eventVersion: this.eventVersion,
-      data: this.data,
-    };
-  }
-}
-
-// 別のテスト用イベントクラス
-class AnotherTestEvent implements DomainEvent {
-  public readonly eventId = 'another-test-event-id';
-  public readonly eventName = 'AnotherTestEvent';
-  public readonly occurredAt = new Date();
-  public readonly eventVersion = 1;
-
-  constructor(public readonly value: number) {}
-
-  toJSON(): Record<string, unknown> {
-    return {
-      eventId: this.eventId,
-      eventName: this.eventName,
-      occurredAt: this.occurredAt.toISOString(),
-      eventVersion: this.eventVersion,
-      value: this.value,
-    };
-  }
-}
+import type { IEventHandler, ILogger } from '@nara-opendata/shared-kernel';
+import { TestEvent, AnotherTestEvent } from './test/TestEventMap';
 
 // テスト用のハンドラー
 class TestEventHandler implements IEventHandler<TestEvent> {
@@ -51,7 +12,7 @@ class TestEventHandler implements IEventHandler<TestEvent> {
   }
 
   getEventName(): string {
-    return 'TestEvent';
+    return 'TestEvent' as const;
   }
 }
 
@@ -76,15 +37,15 @@ describe('InMemoryEventBus', () => {
     it('ハンドラーを登録できる', () => {
       const handler = new TestEventHandler();
 
-      expect(() => eventBus.subscribe('TestEvent', handler)).not.toThrow();
+      expect(() => eventBus.subscribe('TestEvent' as const, handler)).not.toThrow();
     });
 
     it('同じハンドラーは重複登録されない', async () => {
       const handler = new TestEventHandler();
       const event = new TestEvent('test data');
 
-      eventBus.subscribe('TestEvent', handler);
-      eventBus.subscribe('TestEvent', handler); // 重複登録
+      eventBus.subscribe('TestEvent' as const, handler);
+      eventBus.subscribe('TestEvent' as const, handler); // 重複登録
 
       await eventBus.publish(event);
 
@@ -97,8 +58,8 @@ describe('InMemoryEventBus', () => {
       const handler2 = new TestEventHandler();
       const event = new TestEvent('test data');
 
-      eventBus.subscribe('TestEvent', handler1);
-      eventBus.subscribe('TestEvent', handler2);
+      eventBus.subscribe('TestEvent' as const, handler1);
+      eventBus.subscribe('TestEvent' as const, handler2);
 
       await eventBus.publish(event);
 
@@ -112,8 +73,8 @@ describe('InMemoryEventBus', () => {
       const handler = new TestEventHandler();
       const event = new TestEvent('test data');
 
-      eventBus.subscribe('TestEvent', handler);
-      eventBus.unsubscribe('TestEvent', handler);
+      eventBus.subscribe('TestEvent' as const, handler);
+      eventBus.unsubscribe('TestEvent' as const, handler);
 
       await eventBus.publish(event);
 
@@ -123,7 +84,7 @@ describe('InMemoryEventBus', () => {
     it('存在しないハンドラーの解除はエラーにならない', () => {
       const handler = new TestEventHandler();
 
-      expect(() => eventBus.unsubscribe('TestEvent', handler)).not.toThrow();
+      expect(() => eventBus.unsubscribe('TestEvent' as const, handler)).not.toThrow();
     });
 
     it('複数ハンドラーのうち1つだけを解除できる', async () => {
@@ -131,9 +92,9 @@ describe('InMemoryEventBus', () => {
       const handler2 = new TestEventHandler();
       const event = new TestEvent('test data');
 
-      eventBus.subscribe('TestEvent', handler1);
-      eventBus.subscribe('TestEvent', handler2);
-      eventBus.unsubscribe('TestEvent', handler1);
+      eventBus.subscribe('TestEvent' as const, handler1);
+      eventBus.subscribe('TestEvent' as const, handler2);
+      eventBus.unsubscribe('TestEvent' as const, handler1);
 
       await eventBus.publish(event);
 
@@ -148,7 +109,7 @@ describe('InMemoryEventBus', () => {
       const handler2 = new TestEventHandler();
       const event = new TestEvent('test data');
 
-      eventBus.subscribe('TestEvent', handler1);
+      eventBus.subscribe('TestEvent' as const, handler1);
       eventBus.subscribe('AnotherEvent', handler2);
 
       eventBus.clearAllHandlers();
@@ -165,7 +126,7 @@ describe('InMemoryEventBus', () => {
       const handler = new TestEventHandler();
       const event = new TestEvent('test data');
 
-      eventBus.subscribe('TestEvent', handler);
+      eventBus.subscribe('TestEvent' as const, handler);
 
       await eventBus.publish(event);
 
@@ -181,7 +142,7 @@ describe('InMemoryEventBus', () => {
         handlerCalled = true;
       });
 
-      eventBus.subscribe('TestEvent', handler);
+      eventBus.subscribe('TestEvent' as const, handler);
 
       const publishPromise = eventBus.publish(event);
 
@@ -207,8 +168,8 @@ describe('InMemoryEventBus', () => {
 
       handler1.handleMock.mockRejectedValue(new Error('Handler 1 error'));
 
-      eventBus.subscribe('TestEvent', handler1);
-      eventBus.subscribe('TestEvent', handler2);
+      eventBus.subscribe('TestEvent' as const, handler1);
+      eventBus.subscribe('TestEvent' as const, handler2);
 
       await eventBus.publish(event);
 
@@ -219,7 +180,7 @@ describe('InMemoryEventBus', () => {
         expect.any(Object), // EventBusError
         expect.objectContaining({
           eventId: event.eventId,
-          eventName: 'TestEvent',
+          eventName: 'TestEvent' as const,
           errorType: 'HANDLER_ERROR',
           errorMessage: 'Handler 1 error',
         }),
@@ -233,7 +194,7 @@ describe('InMemoryEventBus', () => {
       const event1 = new TestEvent('data1');
       const event2 = new TestEvent('data2');
 
-      eventBus.subscribe('TestEvent', handler);
+      eventBus.subscribe('TestEvent' as const, handler);
 
       await eventBus.publishAll([event1, event2]);
 
@@ -246,14 +207,14 @@ describe('InMemoryEventBus', () => {
       const testHandler = new TestEventHandler();
       const anotherHandler: IEventHandler<AnotherTestEvent> = {
         handle: vi.fn(),
-        getEventName: () => 'AnotherTestEvent',
+        getEventName: () => 'AnotherTestEvent' as const,
       };
 
       const testEvent = new TestEvent('test data');
       const anotherEvent = new AnotherTestEvent(42);
 
-      eventBus.subscribe('TestEvent', testHandler);
-      eventBus.subscribe('AnotherTestEvent', anotherHandler);
+      eventBus.subscribe('TestEvent' as const, testHandler);
+      eventBus.subscribe('AnotherTestEvent' as const, anotherHandler);
 
       await eventBus.publishAll([testEvent, anotherEvent]);
 
@@ -273,7 +234,7 @@ describe('InMemoryEventBus', () => {
         await eventBus.publish(event2);
       });
 
-      eventBus.subscribe('TestEvent', handler);
+      eventBus.subscribe('TestEvent' as const, handler);
 
       await eventBus.publish(event1);
 

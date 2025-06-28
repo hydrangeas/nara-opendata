@@ -1,28 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { InMemoryEventBus } from './InMemoryEventBus';
-import type { IEventHandler, DomainEvent, ILogger } from '@nara-opendata/shared-kernel';
-
-// テスト用のイベントクラス
-class BenchmarkEvent implements DomainEvent {
-  public readonly eventId: string;
-  public readonly eventName = 'BenchmarkEvent';
-  public readonly occurredAt = new Date();
-  public readonly eventVersion = 1;
-
-  constructor(public readonly index: number) {
-    this.eventId = `benchmark-${index}`;
-  }
-
-  toJSON(): Record<string, unknown> {
-    return {
-      eventId: this.eventId,
-      eventName: this.eventName,
-      occurredAt: this.occurredAt.toISOString(),
-      eventVersion: this.eventVersion,
-      index: this.index,
-    };
-  }
-}
+import type { IEventHandler, ILogger } from '@nara-opendata/shared-kernel';
+import { BenchmarkEvent } from './test/TestEventMap';
 
 // テスト用のハンドラー
 class BenchmarkHandler implements IEventHandler<BenchmarkEvent> {
@@ -35,7 +14,7 @@ class BenchmarkHandler implements IEventHandler<BenchmarkEvent> {
   }
 
   getEventName(): string {
-    return 'BenchmarkEvent';
+    return 'BenchmarkEvent' as const;
   }
 }
 
@@ -66,7 +45,7 @@ describe('InMemoryEventBus パフォーマンスベンチマーク', () => {
       for (let i = 0; i < 100; i++) {
         const handler = new BenchmarkHandler();
         handlers.push(handler);
-        eventBus.subscribe('BenchmarkEvent', handler);
+        eventBus.subscribe('BenchmarkEvent' as const, handler);
       }
       const subscribeTime = performance.now() - startSubscribe;
 
@@ -98,7 +77,7 @@ describe('InMemoryEventBus パフォーマンスベンチマーク', () => {
       eventBus = new InMemoryEventBus(config, logger);
       const handler = new BenchmarkHandler();
 
-      eventBus.subscribe('BenchmarkEvent', handler);
+      eventBus.subscribe('BenchmarkEvent' as const, handler);
 
       // 10000個のイベントを処理
       const events = Array.from({ length: 10000 }, (_, i) => new BenchmarkEvent(i));
@@ -123,7 +102,7 @@ describe('InMemoryEventBus パフォーマンスベンチマーク', () => {
       eventBus = new InMemoryEventBus(config, logger);
       const handler = new BenchmarkHandler();
 
-      eventBus.subscribe('BenchmarkEvent', handler);
+      eventBus.subscribe('BenchmarkEvent' as const, handler);
 
       // メモリ使用量を測定（簡易的）
       const initialMemory = process.memoryUsage().heapUsed;
@@ -158,7 +137,7 @@ describe('InMemoryEventBus パフォーマンスベンチマーク', () => {
       eventBus = new InMemoryEventBus(config, logger);
       const handler = new BenchmarkHandler();
 
-      eventBus.subscribe('BenchmarkEvent', handler);
+      eventBus.subscribe('BenchmarkEvent' as const, handler);
 
       // 100個の並行publish
       const startTime = performance.now();
@@ -194,10 +173,10 @@ describe('InMemoryEventBus パフォーマンスベンチマーク', () => {
             await eventBus.publish(new BenchmarkEvent(event.index + 1));
           }
         },
-        getEventName: () => 'BenchmarkEvent',
+        getEventName: () => 'BenchmarkEvent' as const,
       };
 
-      eventBus.subscribe('BenchmarkEvent', chainHandler);
+      eventBus.subscribe('BenchmarkEvent' as const, chainHandler);
 
       const startTime = performance.now();
       await eventBus.publish(new BenchmarkEvent(0));

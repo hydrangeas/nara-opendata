@@ -1,27 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { InMemoryEventBus } from './InMemoryEventBus';
 import { EventBusError, EventBusErrorType } from './EventBusError';
-import type { IEventHandler, DomainEvent, ILogger } from '@nara-opendata/shared-kernel';
-
-// テスト用のイベントクラス
-class TestEvent implements DomainEvent {
-  public readonly eventId = 'test-event-id';
-  public readonly eventName = 'TestEvent';
-  public readonly occurredAt = new Date();
-  public readonly eventVersion = 1;
-
-  constructor(public readonly data: string) {}
-
-  toJSON(): Record<string, unknown> {
-    return {
-      eventId: this.eventId,
-      eventName: this.eventName,
-      occurredAt: this.occurredAt.toISOString(),
-      eventVersion: this.eventVersion,
-      data: this.data,
-    };
-  }
-}
+import type { IEventHandler, ILogger } from '@nara-opendata/shared-kernel';
+import { TestEvent } from './test/TestEventMap';
 
 // テスト用のハンドラー
 class TestEventHandler implements IEventHandler<TestEvent> {
@@ -32,7 +13,7 @@ class TestEventHandler implements IEventHandler<TestEvent> {
   }
 
   getEventName(): string {
-    return 'TestEvent';
+    return 'TestEvent' as const;
   }
 }
 
@@ -69,7 +50,7 @@ describe('InMemoryEventBus エッジケース', () => {
           }),
       );
 
-      eventBus.subscribe('TestEvent', handler);
+      eventBus.subscribe('TestEvent' as const, handler);
 
       // イベント発行はタイムアウトで完了する
       await eventBus.publish(event);
@@ -108,9 +89,9 @@ describe('InMemoryEventBus エッジケース', () => {
       handler2.handleMock.mockImplementation(() => delay(200));
       handler3.handleMock.mockResolvedValue(undefined); // これは正常に完了
 
-      eventBus.subscribe('TestEvent', handler1);
-      eventBus.subscribe('TestEvent', handler2);
-      eventBus.subscribe('TestEvent', handler3);
+      eventBus.subscribe('TestEvent' as const, handler1);
+      eventBus.subscribe('TestEvent' as const, handler2);
+      eventBus.subscribe('TestEvent' as const, handler3);
 
       await eventBus.publish(event);
 
@@ -129,7 +110,7 @@ describe('InMemoryEventBus エッジケース', () => {
       const error = new EventBusError(
         EventBusErrorType.HANDLER_ERROR,
         'Test error',
-        'TestEvent',
+        'TestEvent' as const,
         'test-id',
         'String error',
       );
@@ -152,9 +133,9 @@ describe('InMemoryEventBus エッジケース', () => {
       handler2.handleMock.mockRejectedValue(new Error('Async error'));
       handler3.handleMock.mockResolvedValue(undefined);
 
-      eventBus.subscribe('TestEvent', handler1);
-      eventBus.subscribe('TestEvent', handler2);
-      eventBus.subscribe('TestEvent', handler3);
+      eventBus.subscribe('TestEvent' as const, handler1);
+      eventBus.subscribe('TestEvent' as const, handler2);
+      eventBus.subscribe('TestEvent' as const, handler3);
 
       await eventBus.publish(event);
 
@@ -177,8 +158,8 @@ describe('InMemoryEventBus エッジケース', () => {
       });
       handler2.handleMock.mockResolvedValue(undefined);
 
-      eventBus.subscribe('TestEvent', handler1);
-      eventBus.subscribe('TestEvent', handler2);
+      eventBus.subscribe('TestEvent' as const, handler1);
+      eventBus.subscribe('TestEvent' as const, handler2);
 
       await eventBus.publish(event);
 
@@ -199,7 +180,7 @@ describe('InMemoryEventBus エッジケース', () => {
       const eventBus = new InMemoryEventBus(config, mockLogger);
       const handler = new TestEventHandler();
 
-      eventBus.subscribe('TestEvent', handler);
+      eventBus.subscribe('TestEvent' as const, handler);
 
       // 1000個のイベントを発行
       const events = Array.from({ length: 1000 }, (_, i) => new TestEvent(`data-${i}`));
@@ -237,7 +218,7 @@ describe('InMemoryEventBus エッジケース', () => {
       const event: any = new TestEvent('circular');
       event.self = event; // 循環参照を作成
 
-      eventBus.subscribe('TestEvent', handler);
+      eventBus.subscribe('TestEvent' as const, handler);
 
       await eventBus.publish(event);
 
@@ -251,7 +232,7 @@ describe('InMemoryEventBus エッジケース', () => {
       const handler = new TestEventHandler();
       const events = Array.from({ length: 10 }, (_, i) => new TestEvent(`concurrent-${i}`));
 
-      eventBus.subscribe('TestEvent', handler);
+      eventBus.subscribe('TestEvent' as const, handler);
 
       // 並行してpublishを実行
       const promises = events.map((event) => eventBus.publish(event));
@@ -272,10 +253,10 @@ describe('InMemoryEventBus エッジケース', () => {
 
       handler1.handleMock.mockImplementation(async () => {
         // ハンドラー実行中に別のハンドラーを登録
-        eventBus.subscribe('TestEvent', handler2);
+        eventBus.subscribe('TestEvent' as const, handler2);
       });
 
-      eventBus.subscribe('TestEvent', handler1);
+      eventBus.subscribe('TestEvent' as const, handler1);
 
       await eventBus.publish(event);
 

@@ -1,4 +1,11 @@
-import type { IEventBus, IEventHandler, DomainEvent, ILogger } from '@nara-opendata/shared-kernel';
+import type {
+  IEventBus,
+  IEventHandler,
+  DomainEvent,
+  ILogger,
+  EventName,
+  EventType,
+} from '@nara-opendata/shared-kernel';
 import { ConsoleLogger } from '../logging';
 import type { IEventBusConfig } from './EventBusConfig';
 import { defaultEventBusConfig } from './EventBusConfig';
@@ -86,13 +93,13 @@ export class InMemoryEventBus implements IEventBus {
    * @param handler 登録するイベントハンドラー
    * @remarks 同じハンドラーインスタンスが既に登録されている場合は何もしません
    */
-  subscribe<T extends DomainEvent>(eventName: string, handler: IEventHandler<T>): void {
-    let handlers = this.handlers.get(eventName);
+  subscribe<K extends EventName>(eventName: K, handler: IEventHandler<EventType<K>>): void {
+    let handlers = this.handlers.get(eventName as string);
 
     if (!handlers) {
       // 新しいイベントタイプの場合、配列を作成
       handlers = [];
-      this.handlers.set(eventName, handlers);
+      this.handlers.set(eventName as string, handlers);
     } else {
       // 同じハンドラーが既に登録されていないかチェック
       // Note: as演算子を使用して型の互換性を保証
@@ -120,8 +127,8 @@ export class InMemoryEventBus implements IEventBus {
    * @param handler 解除するイベントハンドラー
    * @remarks 指定されたハンドラーが登録されていない場合は何もしません
    */
-  unsubscribe<T extends DomainEvent>(eventName: string, handler: IEventHandler<T>): void {
-    const handlers = this.handlers.get(eventName);
+  unsubscribe<K extends EventName>(eventName: K, handler: IEventHandler<EventType<K>>): void {
+    const handlers = this.handlers.get(eventName as string);
     if (!handlers) {
       if (this.config.debugMode) {
         this.logger.debug(`No handlers registered for event: ${eventName}`);
@@ -141,7 +148,7 @@ export class InMemoryEventBus implements IEventBus {
 
       // ハンドラーが空になった場合はMapから削除
       if (handlers.length === 0) {
-        this.handlers.delete(eventName);
+        this.handlers.delete(eventName as string);
         if (this.config.debugMode) {
           this.logger.debug(`All handlers removed for event: ${eventName}`);
         }
@@ -183,7 +190,7 @@ export class InMemoryEventBus implements IEventBus {
    * - イベントハンドラー内で新たなイベントを発行した場合、それらも同じサイクルで処理されます
    * @throws {EventBusError} イベント数が上限を超えた場合
    */
-  async publish(event: DomainEvent): Promise<void> {
+  async publish<K extends EventName>(event: EventType<K>): Promise<void> {
     // イベント数の上限チェック
     if (this.pendingEvents.length >= this.config.maxEventsPerCycle) {
       throw new EventBusError(

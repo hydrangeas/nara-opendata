@@ -1,27 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { InMemoryEventBus } from './InMemoryEventBus';
 import { EventBusError, EventBusErrorType } from './EventBusError';
-import type { IEventHandler, DomainEvent, ILogger } from '@nara-opendata/shared-kernel';
-
-// テスト用のイベントクラス
-class TestEvent implements DomainEvent {
-  public readonly eventId = `test-${Date.now()}`;
-  public readonly eventName = 'TestEvent';
-  public readonly occurredAt = new Date();
-  public readonly eventVersion = 1;
-
-  constructor(public readonly data: string) {}
-
-  toJSON(): Record<string, unknown> {
-    return {
-      eventId: this.eventId,
-      eventName: this.eventName,
-      occurredAt: this.occurredAt.toISOString(),
-      eventVersion: this.eventVersion,
-      data: this.data,
-    };
-  }
-}
+import type { IEventHandler, ILogger } from '@nara-opendata/shared-kernel';
+import { TestEvent } from './test/TestEventMap';
 
 // テスト用のハンドラー
 class TestEventHandler implements IEventHandler<TestEvent> {
@@ -32,7 +13,7 @@ class TestEventHandler implements IEventHandler<TestEvent> {
   }
 
   getEventName(): string {
-    return 'TestEvent';
+    return 'TestEvent' as const;
   }
 }
 
@@ -61,7 +42,7 @@ describe('InMemoryEventBus Configuration', () => {
         await eventBus.publish(new TestEvent('recursive'));
       });
 
-      eventBus.subscribe('TestEvent', handler);
+      eventBus.subscribe('TestEvent' as const, handler);
 
       // エラーがスローされることを確認
       await expect(eventBus.publish(new TestEvent('initial'))).rejects.toThrow(EventBusError);
@@ -108,7 +89,7 @@ describe('InMemoryEventBus Configuration', () => {
         () => new Promise((resolve) => setTimeout(resolve, 200)),
       );
 
-      eventBus.subscribe('TestEvent', handler);
+      eventBus.subscribe('TestEvent' as const, handler);
       await eventBus.publish(new TestEvent('timeout test'));
 
       // エラーログが記録されることを確認
@@ -134,8 +115,8 @@ describe('InMemoryEventBus Configuration', () => {
       // 速いハンドラー
       fastHandler.handleMock.mockResolvedValue(undefined);
 
-      eventBus.subscribe('TestEvent', slowHandler);
-      eventBus.subscribe('TestEvent', fastHandler);
+      eventBus.subscribe('TestEvent' as const, slowHandler);
+      eventBus.subscribe('TestEvent' as const, fastHandler);
 
       await eventBus.publish(new TestEvent('test'));
 
@@ -149,7 +130,7 @@ describe('InMemoryEventBus Configuration', () => {
       const eventBus = new InMemoryEventBus({ debugMode: true }, mockLogger);
       const handler = new TestEventHandler();
 
-      eventBus.subscribe('TestEvent', handler);
+      eventBus.subscribe('TestEvent' as const, handler);
       await eventBus.publish(new TestEvent('debug test'));
 
       // デバッグログが出力されることを確認
@@ -171,7 +152,7 @@ describe('InMemoryEventBus Configuration', () => {
       const eventBus = new InMemoryEventBus({ debugMode: false }, mockLogger);
       const handler = new TestEventHandler();
 
-      eventBus.subscribe('TestEvent', handler);
+      eventBus.subscribe('TestEvent' as const, handler);
       await eventBus.publish(new TestEvent('no debug'));
 
       // デバッグログが出力されないことを確認
@@ -185,7 +166,7 @@ describe('InMemoryEventBus Configuration', () => {
       const error = new EventBusError(
         EventBusErrorType.HANDLER_ERROR,
         'Test error message',
-        'TestEvent',
+        'TestEvent' as const,
         'test-123',
         cause,
       );
@@ -196,7 +177,7 @@ describe('InMemoryEventBus Configuration', () => {
         name: 'EventBusError',
         type: EventBusErrorType.HANDLER_ERROR,
         message: 'Test error message',
-        eventName: 'TestEvent',
+        eventName: 'TestEvent' as const,
         eventId: 'test-123',
         cause: {
           name: 'Error',
