@@ -43,10 +43,12 @@ export function initializeContainer(config: IDIContainerConfig = {}): void {
 
   // Register infrastructure services
   container.register<ILogger>(TYPES.ILogger, {
-    useClass: ConsoleLogger,
+    useFactory: () => new ConsoleLogger(),
   });
 
-  container.registerSingleton<IEventBus>(TYPES.IEventBus, InMemoryEventBus);
+  container.register<IEventBus>(TYPES.IEventBus, {
+    useFactory: () => new InMemoryEventBus(),
+  });
 
   // Register domain services
   container.register(TYPES.AuthenticationService, {

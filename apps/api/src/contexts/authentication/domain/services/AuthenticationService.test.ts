@@ -1,9 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  AuthenticationService,
-  type IJWTPayload,
-  type IRateLimitState,
-} from './AuthenticationService';
+import type { AuthenticationServiceClass } from './AuthenticationService.class';
+import type { IJWTPayload, IRateLimitState } from './AuthenticationService';
 import {
   getUserId,
   getRateLimit as getAuthenticatedUserRateLimit,
@@ -14,9 +11,25 @@ import {
   getRateLimitWindowSeconds,
   getRateLimitSource,
 } from '../value-objects/RateLimit';
+import { setupTestContainer, teardownTestContainer } from '../../../../test-utils/di-helpers';
+import { resolve } from '../../../../container';
+import { TYPES } from '../../../../types/di';
+import type { ILogger } from '@nara-opendata/shared-kernel';
 
 describe('AuthenticationService', () => {
   const validUserId = '123e4567-e89b-12d3-a456-426614174000';
+  let authenticationService: AuthenticationServiceClass;
+  let mockLogger: ILogger;
+
+  beforeEach(() => {
+    setupTestContainer();
+    mockLogger = resolve<ILogger>(TYPES.ILogger);
+    authenticationService = resolve<AuthenticationServiceClass>(TYPES.AuthenticationService);
+  });
+
+  afterEach(() => {
+    teardownTestContainer();
+  });
 
   describe('createAuthenticatedUserFromJWT', () => {
     beforeEach(() => {
@@ -36,7 +49,7 @@ describe('AuthenticationService', () => {
         exp: Math.floor(now.getTime() / 1000) + 3600, // 1時間後に期限切れ
       };
 
-      const result = AuthenticationService.createAuthenticatedUserFromJWT(payload);
+      const result = authenticationService.createAuthenticatedUserFromJWT(payload);
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -60,7 +73,7 @@ describe('AuthenticationService', () => {
         },
       };
 
-      const result = AuthenticationService.createAuthenticatedUserFromJWT(payload);
+      const result = authenticationService.createAuthenticatedUserFromJWT(payload);
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -88,7 +101,7 @@ describe('AuthenticationService', () => {
         },
       };
 
-      const result = AuthenticationService.createAuthenticatedUserFromJWT(payload);
+      const result = authenticationService.createAuthenticatedUserFromJWT(payload);
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -109,7 +122,7 @@ describe('AuthenticationService', () => {
         exp: Math.floor(now.getTime() / 1000) + 3600,
       };
 
-      const result = AuthenticationService.createAuthenticatedUserFromJWT(payload);
+      const result = authenticationService.createAuthenticatedUserFromJWT(payload);
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -122,7 +135,7 @@ describe('AuthenticationService', () => {
     it('無効なティアの場合TIER1をデフォルトとして使用し、警告をログに出力する', () => {
       const now = new Date('2024-01-01T12:00:00Z');
       vi.setSystemTime(now);
-      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      const loggerWarnSpy = vi.spyOn(mockLogger, 'warn');
 
       const payload: IJWTPayload = {
         sub: validUserId,
@@ -132,7 +145,7 @@ describe('AuthenticationService', () => {
         },
       };
 
-      const result = AuthenticationService.createAuthenticatedUserFromJWT(payload);
+      const result = authenticationService.createAuthenticatedUserFromJWT(payload);
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -144,11 +157,9 @@ describe('AuthenticationService', () => {
       }
 
       // 警告が出力されることを確認
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect(loggerWarnSpy).toHaveBeenCalledWith(
         'Unknown tier value: "TIER99", defaulting to TIER1',
       );
-
-      consoleWarnSpy.mockRestore();
     });
 
     it('ティア値はcase insensitiveで処理される', () => {
@@ -163,7 +174,7 @@ describe('AuthenticationService', () => {
           tier: 'tier2',
         },
       };
-      const resultLower = AuthenticationService.createAuthenticatedUserFromJWT(payloadLower);
+      const resultLower = authenticationService.createAuthenticatedUserFromJWT(payloadLower);
       expect(resultLower.success).toBe(true);
       if (resultLower.success) {
         const userRateLimit = getAuthenticatedUserRateLimit(resultLower.user);
@@ -179,7 +190,7 @@ describe('AuthenticationService', () => {
           tier: 'Tier3',
         },
       };
-      const resultMixed = AuthenticationService.createAuthenticatedUserFromJWT(payloadMixed);
+      const resultMixed = authenticationService.createAuthenticatedUserFromJWT(payloadMixed);
       expect(resultMixed.success).toBe(true);
       if (resultMixed.success) {
         const userRateLimit = getAuthenticatedUserRateLimit(resultMixed.user);
@@ -195,7 +206,7 @@ describe('AuthenticationService', () => {
           tier: '  TIER1  ',
         },
       };
-      const resultSpaces = AuthenticationService.createAuthenticatedUserFromJWT(payloadSpaces);
+      const resultSpaces = authenticationService.createAuthenticatedUserFromJWT(payloadSpaces);
       expect(resultSpaces.success).toBe(true);
       if (resultSpaces.success) {
         const userRateLimit = getAuthenticatedUserRateLimit(resultSpaces.user);
@@ -212,7 +223,7 @@ describe('AuthenticationService', () => {
         exp: Math.floor(now.getTime() / 1000) - 1, // 1秒前に期限切れ
       };
 
-      const result = AuthenticationService.createAuthenticatedUserFromJWT(payload);
+      const result = authenticationService.createAuthenticatedUserFromJWT(payload);
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -232,7 +243,7 @@ describe('AuthenticationService', () => {
         iat: Math.floor(now.getTime() / 1000) + 120, // 2分後に発行
       };
 
-      const result = AuthenticationService.createAuthenticatedUserFromJWT(payload);
+      const result = authenticationService.createAuthenticatedUserFromJWT(payload);
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -251,7 +262,7 @@ describe('AuthenticationService', () => {
         // exp がない
       };
 
-      const result = AuthenticationService.createAuthenticatedUserFromJWT(payload);
+      const result = authenticationService.createAuthenticatedUserFromJWT(payload);
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -281,7 +292,7 @@ describe('AuthenticationService', () => {
         iat: Math.floor(now.getTime() / 1000) - 60, // 1分前に発行
       };
 
-      const result = AuthenticationService.validateTokenTiming(payload);
+      const result = authenticationService.validateTokenTiming(payload);
       expect(result.isValid).toBe(true);
       if (!result.isValid) {
         expect(result.reason).toBeUndefined();
@@ -297,7 +308,7 @@ describe('AuthenticationService', () => {
         exp: Math.floor(now.getTime() / 1000) - 1, // 1秒前に期限切れ
       };
 
-      const result = AuthenticationService.validateTokenTiming(payload);
+      const result = authenticationService.validateTokenTiming(payload);
       expect(result.isValid).toBe(false);
       if (!result.isValid) {
         expect(result.reason).toBe('expired');
@@ -316,7 +327,7 @@ describe('AuthenticationService', () => {
         iat: Math.floor(now.getTime() / 1000) + 120, // 2分後に発行（clockSkew 60秒を超える）
       };
 
-      const result = AuthenticationService.validateTokenTiming(payload);
+      const result = authenticationService.validateTokenTiming(payload);
       expect(result.isValid).toBe(false);
       if (!result.isValid) {
         expect(result.reason).toBe('not_yet_valid');
@@ -334,7 +345,7 @@ describe('AuthenticationService', () => {
         // exp がない
       };
 
-      const result = AuthenticationService.validateTokenTiming(payload);
+      const result = authenticationService.validateTokenTiming(payload);
       expect(result.isValid).toBe(false);
       if (!result.isValid) {
         expect(result.reason).toBe('missing_exp');
@@ -352,7 +363,7 @@ describe('AuthenticationService', () => {
         // iat がない
       };
 
-      const result = AuthenticationService.validateTokenTiming(payload);
+      const result = authenticationService.validateTokenTiming(payload);
       expect(result.isValid).toBe(true);
     });
 
@@ -366,12 +377,12 @@ describe('AuthenticationService', () => {
         iat: Math.floor(now.getTime() / 1000) + 30, // 30秒後に発行（clockSkew 60秒以内）
       };
 
-      const result = AuthenticationService.validateTokenTiming(payload);
+      const result = authenticationService.validateTokenTiming(payload);
       expect(result.isValid).toBe(true);
     });
   });
 
-  describe('checkRateLimitWithState', () => {
+  describe('checkRateLimit', () => {
     beforeEach(() => {
       vi.useFakeTimers();
     });
@@ -388,7 +399,7 @@ describe('AuthenticationService', () => {
         sub: validUserId,
         exp: Math.floor(now.getTime() / 1000) + 3600,
       };
-      const authResult = AuthenticationService.createAuthenticatedUserFromJWT(payload);
+      const authResult = authenticationService.createAuthenticatedUserFromJWT(payload);
       expect(authResult.success).toBe(true);
       if (!authResult.success) throw new Error('Failed to create user');
 
@@ -398,7 +409,7 @@ describe('AuthenticationService', () => {
         windowStartTime: new Date('2024-01-01T11:59:30Z'), // 30秒前
       };
 
-      const result = AuthenticationService.checkRateLimitWithState(authResult.user, state);
+      const result = authenticationService.checkRateLimit(authResult.user, state);
 
       expect(result.allowed).toBe(true);
       expect(result.currentCount).toBe(30);
@@ -416,7 +427,7 @@ describe('AuthenticationService', () => {
         sub: validUserId,
         exp: Math.floor(now.getTime() / 1000) + 3600,
       };
-      const authResult = AuthenticationService.createAuthenticatedUserFromJWT(payload);
+      const authResult = authenticationService.createAuthenticatedUserFromJWT(payload);
       expect(authResult.success).toBe(true);
       if (!authResult.success) throw new Error('Failed to create user');
 
@@ -426,7 +437,7 @@ describe('AuthenticationService', () => {
         windowStartTime: new Date('2024-01-01T11:59:30Z'),
       };
 
-      const result = AuthenticationService.checkRateLimitWithState(authResult.user, state);
+      const result = authenticationService.checkRateLimit(authResult.user, state);
 
       expect(result.allowed).toBe(false);
       expect(result.currentCount).toBe(60);
@@ -444,7 +455,7 @@ describe('AuthenticationService', () => {
         sub: validUserId,
         exp: Math.floor(now.getTime() / 1000) + 3600,
       };
-      const authResult = AuthenticationService.createAuthenticatedUserFromJWT(payload);
+      const authResult = authenticationService.createAuthenticatedUserFromJWT(payload);
       expect(authResult.success).toBe(true);
       if (!authResult.success) throw new Error('Failed to create user');
 
@@ -454,7 +465,7 @@ describe('AuthenticationService', () => {
         windowStartTime: new Date('2024-01-01T11:59:00Z'), // 2分前
       };
 
-      const result = AuthenticationService.checkRateLimitWithState(authResult.user, state);
+      const result = authenticationService.checkRateLimit(authResult.user, state);
 
       expect(result.allowed).toBe(true);
       expect(result.currentCount).toBe(0); // 新しいウィンドウ
@@ -478,7 +489,7 @@ describe('AuthenticationService', () => {
           },
         },
       };
-      const authResult = AuthenticationService.createAuthenticatedUserFromJWT(payload);
+      const authResult = authenticationService.createAuthenticatedUserFromJWT(payload);
       expect(authResult.success).toBe(true);
       if (!authResult.success) throw new Error('Failed to create user');
 
@@ -488,7 +499,7 @@ describe('AuthenticationService', () => {
         windowStartTime: new Date('2024-01-01T11:59:00Z'), // 1分前
       };
 
-      const result = AuthenticationService.checkRateLimitWithState(authResult.user, state);
+      const result = authenticationService.checkRateLimit(authResult.user, state);
 
       expect(result.allowed).toBe(true);
       expect(result.currentCount).toBe(250);
@@ -513,7 +524,7 @@ describe('AuthenticationService', () => {
       vi.setSystemTime(now);
 
       const resetTime = new Date('2024-01-01T12:00:30Z');
-      const seconds = AuthenticationService.calculateRetryAfterSeconds(resetTime);
+      const seconds = authenticationService.calculateRetryAfterSeconds(resetTime);
 
       expect(seconds).toBe(30);
     });
@@ -523,7 +534,7 @@ describe('AuthenticationService', () => {
       vi.setSystemTime(now);
 
       const resetTime = new Date('2024-01-01T11:59:30Z');
-      const seconds = AuthenticationService.calculateRetryAfterSeconds(resetTime);
+      const seconds = authenticationService.calculateRetryAfterSeconds(resetTime);
 
       expect(seconds).toBe(0);
     });
