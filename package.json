@@ -2,6 +2,7 @@
   "name": "nara-opendata",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "description": "奈良県オープンデータ提供API",
   "engines": {
     "node": ">=20.0.0",
