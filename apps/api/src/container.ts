@@ -135,13 +135,12 @@ export function resolve<T>(token: symbol): T {
  * @remarks
  * 後方互換性のために静的サービスクラスの初期化を実行
  */
-export function initializeStaticServices(): void {
+export async function initializeStaticServices(): Promise<void> {
   // 静的サービスの初期化
-  import('./contexts/shared/infrastructure/ServiceInitializer').then(
-    ({ initializeStaticServices }) => {
-      initializeStaticServices();
-    },
+  const { initializeStaticServices: init } = await import(
+    './contexts/shared/infrastructure/ServiceInitializer'
   );
+  init();
 }
 
 /**
@@ -170,6 +169,3 @@ export function resetContainer(): void {
 
 // Export the container for advanced use cases
 export { container };
-
-// Initialize static services when this module is loaded
-initializeStaticServices();

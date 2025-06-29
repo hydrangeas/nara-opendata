@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { createServer, startServer } from './server/server';
-import { initializeStaticServices } from './container';
+import { initializeContainer, initializeStaticServices } from './container';
 
 /**
  * メインエントリーポイント
@@ -10,8 +10,11 @@ import { initializeStaticServices } from './container';
  */
 async function main(): Promise<void> {
   try {
-    // 静的サービスの初期化（DIコンテナ）
-    initializeStaticServices();
+    // DIコンテナの初期化
+    initializeContainer();
+
+    // 静的サービスの初期化
+    await initializeStaticServices();
 
     // サーバーインスタンスを作成
     const server = await createServer();
