@@ -8,7 +8,7 @@ import {
 import type { UserId } from '@nara-opendata/shared-kernel';
 import type { IRateLimitRepository } from '../repositories';
 import { reconstructRateLimitLog } from '../entities/RateLimitLog';
-import { createAPIUser, type APIUser } from '../value-objects';
+import { createEndpoint, createAPIUser, createLogId, type APIUser } from '../value-objects';
 import { APIAccessControlServiceClass } from './APIAccessControlService.class';
 import { RateLimitException } from '../exceptions/RateLimitException';
 
@@ -51,9 +51,9 @@ describe('APIAccessControlService', () => {
       );
 
       const recentLog = reconstructRateLimitLog({
-        id: 'log-1',
-        userId: userId as string,
-        endpoint,
+        id: createLogId(),
+        userId,
+        endpoint: createEndpoint(endpoint),
         requestedAt: new Date(),
       });
       vi.mocked(mockRepository.findRecentByUserId).mockResolvedValue([recentLog]);
@@ -71,9 +71,9 @@ describe('APIAccessControlService', () => {
       requestedAt.setSeconds(requestedAt.getSeconds() - 30); // 30秒前
 
       const recentLog = reconstructRateLimitLog({
-        id: 'log-1',
-        userId: userId as string,
-        endpoint,
+        id: createLogId(),
+        userId,
+        endpoint: createEndpoint(endpoint),
         requestedAt,
       });
       vi.mocked(mockRepository.findRecentByUserId).mockResolvedValue([recentLog]);

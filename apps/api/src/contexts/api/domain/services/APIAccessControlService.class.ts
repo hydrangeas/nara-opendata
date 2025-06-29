@@ -94,7 +94,7 @@ export class APIAccessControlServiceClass {
    * @param requiredTier 必要なティアレベル
    * @returns アクセス可能な場合はtrue
    */
-  hasAccess(apiUser: APIUser, endpoint: string, requiredTier: TierLevel): boolean {
+  hasAccess(apiUser: APIUser, _endpoint: string, requiredTier: TierLevel): boolean {
     const userTier = getAPIUserTier(apiUser);
     const userLevel = getUserTierLevel(userTier);
 

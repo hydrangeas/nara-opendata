@@ -404,7 +404,6 @@ describe('AuthenticationService', () => {
       if (!authResult.success) throw new Error('Failed to create user');
 
       const state: IRateLimitState = {
-        userId: validUserId,
         requestCount: 30,
         windowStartTime: new Date('2024-01-01T11:59:30Z'), // 30秒前
       };
@@ -432,7 +431,6 @@ describe('AuthenticationService', () => {
       if (!authResult.success) throw new Error('Failed to create user');
 
       const state: IRateLimitState = {
-        userId: validUserId,
         requestCount: 60, // 制限値に達している
         windowStartTime: new Date('2024-01-01T11:59:30Z'),
       };
@@ -460,7 +458,6 @@ describe('AuthenticationService', () => {
       if (!authResult.success) throw new Error('Failed to create user');
 
       const state: IRateLimitState = {
-        userId: validUserId,
         requestCount: 100,
         windowStartTime: new Date('2024-01-01T11:59:00Z'), // 2分前
       };
@@ -494,7 +491,6 @@ describe('AuthenticationService', () => {
       if (!authResult.success) throw new Error('Failed to create user');
 
       const state: IRateLimitState = {
-        userId: validUserId,
         requestCount: 250,
         windowStartTime: new Date('2024-01-01T11:59:00Z'), // 1分前
       };
