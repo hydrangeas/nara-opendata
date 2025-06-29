@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createUserId } from '@nara-opendata/shared-kernel';
-import { LogAnalysisService } from './LogAnalysisService';
+import { LogAnalysisServiceClass } from './LogAnalysisService.class';
 import type { IAuthLogRepository, IAPILogRepository } from '../repositories';
 import type { AuthLogEntry, APILogEntry } from '../entities';
 import {
@@ -12,7 +12,7 @@ import {
 } from '../value-objects';
 
 describe('LogAnalysisService', () => {
-  let service: LogAnalysisService;
+  let service: LogAnalysisServiceClass;
   let authLogRepository: IAuthLogRepository;
   let apiLogRepository: IAPILogRepository;
 
@@ -47,7 +47,7 @@ describe('LogAnalysisService', () => {
       findSlowResponses: vi.fn(),
     };
 
-    service = new LogAnalysisService(authLogRepository, apiLogRepository);
+    service = new LogAnalysisServiceClass(authLogRepository, apiLogRepository);
   });
 
   describe('getAuthLogStats', () => {

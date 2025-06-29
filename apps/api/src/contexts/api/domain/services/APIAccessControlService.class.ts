@@ -74,16 +74,60 @@ export class APIAccessControlServiceClass {
   }
 
   /**
-   * ユーザーティアが要求されるティア以上かを検証する
+   * ユーザーのレート制限状態を記録する
    * @param apiUser APIユーザー
-   * @param requiredTier 必要なティアレベル
-   * @returns アクセス可能な場合true
+   * @param endpoint アクセスしたエンドポイント
    */
-  validateTierAccess(apiUser: APIUser, requiredTier: TierLevel): boolean {
+  async recordRequest(apiUser: APIUser, endpoint: string): Promise<void> {
+    const userId = getAPIUserId(apiUser);
+    const log = createRateLimitLog({
+      userId,
+      endpoint: createEndpoint(endpoint),
+    });
+    await this.rateLimitRepository.save(log);
+  }
+
+  /**
+   * エンドポイントへのアクセス権限をチェックする
+   * @param apiUser APIユーザー
+   * @param endpoint チェック対象のエンドポイント
+   * @param requiredTier 必要なティアレベル
+   * @returns アクセス可能な場合はtrue
+   */
+  hasAccess(apiUser: APIUser, endpoint: string, requiredTier: TierLevel): boolean {
     const userTier = getAPIUserTier(apiUser);
     const userLevel = getUserTierLevel(userTier);
 
     // 共有カーネルの関数を使用してティア階層を比較
     return getTierHierarchy(userLevel) >= getTierHierarchy(requiredTier);
+  }
+
+  /**
+   * ユーザーの現在のレート制限状態を取得する
+   * @param apiUser APIユーザー
+   * @returns レート制限の現在の状態
+   */
+  async getRateLimitStatus(apiUser: APIUser): Promise<{
+    currentCount: number;
+    limit: number;
+    windowSeconds: number;
+    remainingRequests: number;
+  }> {
+    const userId = getAPIUserId(apiUser);
+    const userTier = getAPIUserTier(apiUser);
+    const userTierLevel = getUserTierLevel(userTier);
+    const rateLimit = TIER_DEFAULT_RATE_LIMITS[userTierLevel];
+
+    const currentCount = await this.rateLimitRepository.countByUserIdWithinWindow(
+      userId,
+      rateLimit.windowSeconds,
+    );
+
+    return {
+      currentCount,
+      limit: rateLimit.limit,
+      windowSeconds: rateLimit.windowSeconds,
+      remainingRequests: Math.max(0, rateLimit.limit - currentCount),
+    };
   }
 }

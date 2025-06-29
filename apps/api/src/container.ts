@@ -130,6 +130,21 @@ export function resolve<T>(token: symbol): T {
 }
 
 /**
+ * 静的サービスを初期化します
+ *
+ * @remarks
+ * 後方互換性のために静的サービスクラスの初期化を実行
+ */
+export function initializeStaticServices(): void {
+  // 静的サービスの初期化
+  import('./contexts/shared/infrastructure/ServiceInitializer').then(
+    ({ initializeStaticServices }) => {
+      initializeStaticServices();
+    },
+  );
+}
+
+/**
  * DIコンテナにシングルトンを登録します
  *
  * @template T - 登録する型
@@ -155,3 +170,6 @@ export function resetContainer(): void {
 
 // Export the container for advanced use cases
 export { container };
+
+// Initialize static services when this module is loaded
+initializeStaticServices();
