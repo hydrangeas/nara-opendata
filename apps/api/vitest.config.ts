@@ -27,7 +27,6 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, './src'),
       '@nara-opendata/shared-kernel': resolve(__dirname, '../../packages/shared-kernel/src'),
-      '@nara-opendata/infrastructure': resolve(__dirname, '../../packages/infrastructure/src'),
       '@nara-opendata/types': resolve(__dirname, '../../packages/libs/types/src'),
       '@nara-opendata/validation': resolve(__dirname, '../../packages/libs/validation/src'),
       '@nara-opendata/utils': resolve(__dirname, '../../packages/libs/utils/src'),
