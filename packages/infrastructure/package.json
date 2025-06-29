@@ -18,7 +18,9 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@nara-opendata/shared-kernel": "workspace:*"
+    "@nara-opendata/shared-kernel": "workspace:*",
+    "tsyringe": "^4.10.0",
+    "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

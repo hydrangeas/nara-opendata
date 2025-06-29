@@ -190,9 +190,18 @@ importers:
 
   packages/infrastructure:
     dependencies:
+      '@nara-opendata/api':
+        specifier: workspace:*
+        version: link:../../apps/api
       '@nara-opendata/shared-kernel':
         specifier: workspace:*
         version: link:../shared-kernel
+      reflect-metadata:
+        specifier: ^0.2.2
+        version: 0.2.2
+      tsyringe:
+        specifier: ^4.10.0
+        version: 4.10.0
     devDependencies:
       '@types/node':
         specifier: ^20.10.0

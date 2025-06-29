@@ -6,6 +6,7 @@ import { APIAccessControlServiceClass } from './contexts/api/domain/services/API
 import { DataAccessServiceClass } from './contexts/data/domain/services/DataAccessService.class';
 import { LogAnalysisServiceClass } from './contexts/log/domain/services/LogAnalysisService.class';
 import type { ILogger, IEventBus } from '@nara-opendata/shared-kernel';
+import type { IOpenDataRepository } from './contexts/data/domain/repositories/IOpenDataRepository';
 
 describe('DI Container', () => {
   beforeEach(() => {
@@ -80,13 +81,18 @@ describe('DI Container', () => {
       expect(logAnalysisService).toBeInstanceOf(LogAnalysisServiceClass);
     });
 
-    it('本番モードではリポジトリがプレースホルダーエラーを投げる', () => {
+    it('本番モードではリポジトリが適切に登録される', () => {
       initializeContainer({ isTestMode: false });
 
-      // Repository placeholders should throw errors
-      expect(() => resolve(TYPES.IOpenDataRepository)).toThrow(
-        'IOpenDataRepository implementation not yet available',
-      );
+      // OpenDataRepository should be registered
+      const openDataRepo = resolve<IOpenDataRepository>(TYPES.IOpenDataRepository);
+      expect(openDataRepo).toBeDefined();
+      expect(openDataRepo.findByPath).toBeDefined();
+      expect(openDataRepo.exists).toBeDefined();
+      expect(openDataRepo.getContent).toBeDefined();
+      expect(openDataRepo.listByPathPrefix).toBeDefined();
+
+      // Other repository placeholders should throw errors
       expect(() => resolve(TYPES.IRateLimitRepository)).toThrow(
         'IRateLimitRepository implementation not yet available',
       );
