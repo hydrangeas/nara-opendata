@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
-import { createServer } from './server';
+import { createServer, startServer } from './server';
 
 describe('Server', () => {
   let server: FastifyInstance;
@@ -134,7 +134,7 @@ describe('Server', () => {
 
   describe('Graceful shutdown', () => {
     it('シグナル受信時にサーバーが正しくシャットダウンする', async () => {
-      // 新しいサーバーインスタンスを作成（シグナルハンドラーを登録するため）
+      // 新しいサーバーインスタンスを作成
       const testServer = await createServer();
       const closeSpy = vi.spyOn(testServer, 'close');
       const exitSpy = vi
@@ -143,6 +143,9 @@ describe('Server', () => {
           // process.exitを実際には実行しない
           return undefined as never;
         });
+
+      // startServerを呼び出してシグナルハンドラーを登録
+      await startServer(testServer, { port: 0, host: '127.0.0.1' });
 
       // SIGINTシグナルをエミュレート
       process.emit('SIGINT', 'SIGINT');

@@ -5,7 +5,7 @@ import type { FastifyInstance, FastifyServerOptions } from 'fastify';
 import { envSchema } from './config';
 import { createLogger } from './logger';
 import { errorHandler, notFoundHandler } from './error-handler';
-import { sensiblePlugin, healthPlugin } from './plugins';
+import { sensiblePlugin, corsPlugin, healthPlugin } from './plugins';
 
 /**
  * Fastifyサーバーインスタンスを作成
@@ -34,23 +34,11 @@ export async function createServer(
 
   // 基本プラグインの登録
   await server.register(sensiblePlugin);
+  await server.register(corsPlugin);
   await server.register(healthPlugin);
 
   // グレースフルシャットダウンの設定
-  const closeListeners = ['SIGINT', 'SIGTERM'];
-  closeListeners.forEach((signal) => {
-    process.on(signal, async () => {
-      server.log.info(`Received ${signal}, closing server...`);
-      try {
-        await server.close();
-        server.log.info('Server closed successfully');
-        process.exit(0);
-      } catch (err) {
-        server.log.error(err, 'Error during server close');
-        process.exit(1);
-      }
-    });
-  });
+  // Note: シグナルハンドラーは startServer で設定されるため、ここでは設定しない
 
   // サーバー情報のログ出力
   server.log.info(
@@ -78,6 +66,34 @@ export async function startServer(
 ): Promise<void> {
   const port = opts?.port || server.config.PORT;
   const host = opts?.host || server.config.HOST;
+
+  // グレースフルシャットダウンの設定
+  const closeListeners = ['SIGINT', 'SIGTERM'];
+  const signalHandlers = new Map<string, NodeJS.SignalsListener>();
+
+  closeListeners.forEach((signal) => {
+    const handler = async (): Promise<void> => {
+      server.log.info(`Received ${signal}, closing server...`);
+      try {
+        await server.close();
+        server.log.info('Server closed successfully');
+        process.exit(0);
+      } catch (err) {
+        server.log.error(err, 'Error during server close');
+        process.exit(1);
+      }
+    };
+
+    signalHandlers.set(signal, handler);
+    process.once(signal as NodeJS.Signals, handler);
+  });
+
+  // サーバー終了時にシグナルハンドラーをクリーンアップ
+  server.addHook('onClose', async () => {
+    signalHandlers.forEach((handler, signal) => {
+      process.removeListener(signal as NodeJS.Signals, handler);
+    });
+  });
 
   try {
     await server.listen({ port, host });
