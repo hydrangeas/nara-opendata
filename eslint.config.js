@@ -22,6 +22,7 @@ export default tseslint.config(
       '**/*.log',
       '**/.DS_Store',
       '**/data/',
+      '**/vitest.config.ts',
     ],
   },
 
