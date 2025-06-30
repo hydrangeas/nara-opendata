@@ -29,9 +29,9 @@ describe('Server Integration Tests', () => {
       await expect(startServer(server, { port: 0, host: '127.0.0.1' })).resolves.not.toThrow();
 
       // サーバーが実際にリスニングしているか確認
-      const addresses = server.addresses();
-      expect(addresses).toHaveLength(1);
-      expect(addresses[0]).toMatchObject({
+      const addressInfo = server.server.address();
+      expect(addressInfo).toBeTruthy();
+      expect(addressInfo).toMatchObject({
         address: '127.0.0.1',
       });
     });
