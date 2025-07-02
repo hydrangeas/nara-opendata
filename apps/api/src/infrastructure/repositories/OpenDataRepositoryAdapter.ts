@@ -1,5 +1,6 @@
 import { injectable } from 'tsyringe';
 import { OpenDataRepositoryImpl } from '@nara-opendata/infrastructure';
+import type { IOpenDataResource } from '@nara-opendata/infrastructure';
 import type { IOpenDataRepository } from '../../contexts/data/domain/repositories/IOpenDataRepository';
 import type { OpenDataResource } from '../../contexts/data/domain/value-objects/OpenDataResource';
 import { createOpenDataResource } from '../../contexts/data/domain/value-objects/OpenDataResource';
@@ -74,7 +75,7 @@ export class OpenDataRepositoryAdapter implements IOpenDataRepository {
   ): Promise<OpenDataResource[]> {
     const results = await this.impl.listByPathPrefix(pathPrefix, options);
 
-    return results.map((result) => {
+    return results.map((result: IOpenDataResource) => {
       const resource: {
         path: FilePath;
         contentType: ContentType;

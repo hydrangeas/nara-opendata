@@ -196,9 +196,6 @@ importers:
 
   packages/infrastructure:
     dependencies:
-      '@nara-opendata/api':
-        specifier: workspace:*
-        version: link:../../apps/api
       '@nara-opendata/shared-kernel':
         specifier: workspace:*
         version: link:../shared-kernel
