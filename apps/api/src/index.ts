@@ -1,13 +1,42 @@
-// TODO: This is a placeholder file for initial setup (issue #14)
-// This file will be replaced with actual implementation in subsequent issues
-//
-// NOTE: Production server logic has been temporarily removed as part of the
-// environment setup phase. The full Fastify API server implementation,
-// including authentication, rate limiting, and data endpoints will be
-// added in the following issues:
-// - Authentication setup
-// - API endpoint implementation
-// - Database integration
-// - etc.
+import 'reflect-metadata';
+import { createServer, startServer } from './server/server';
+import { initializeContainer, initializeStaticServices } from './container';
 
-console.log('API server placeholder');
+/**
+ * メインエントリーポイント
+ *
+ * @remarks
+ * Fastify APIサーバーを起動する
+ */
+async function main(): Promise<void> {
+  try {
+    // DIコンテナの初期化
+    initializeContainer();
+
+    // 静的サービスの初期化
+    await initializeStaticServices();
+
+    // サーバーインスタンスを作成
+    const server = await createServer();
+
+    // サーバーを起動
+    await startServer(server);
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+// プロセスがクラッシュした場合のエラーハンドリング
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
+// メイン関数を実行
+void main();
