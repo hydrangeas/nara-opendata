@@ -5,7 +5,7 @@ import type { FastifyInstance, FastifyServerOptions } from 'fastify';
 import { envSchema } from './config';
 import { createLogger } from './logger';
 import { errorHandler, notFoundHandler } from './error-handler';
-import { sensiblePlugin, corsPlugin, healthPlugin } from './plugins';
+import { sensiblePlugin, healthPlugin } from './plugins';
 
 /**
  * Fastifyサーバーインスタンスを作成
@@ -34,7 +34,6 @@ export async function createServer(
 
   // 基本プラグインの登録
   await server.register(sensiblePlugin);
-  await server.register(corsPlugin);
   await server.register(healthPlugin);
 
   // グレースフルシャットダウンの設定
