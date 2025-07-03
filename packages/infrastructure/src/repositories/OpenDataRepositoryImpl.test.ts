@@ -133,10 +133,13 @@ describe('OpenDataRepositoryImpl', () => {
       // privateメソッドにアクセスするためのワークアラウンド
       const createResource = (repository as any).createResource.bind(repository);
 
-      // Windowsスタイルのパスでも正しく処理される（normalizationのテスト）
+      // Windowsスタイルのパスがスラッシュに正規化される
       const resource = createResource('secure\\data\\file.json', 1024);
-      // パスはそのまま保持される（正規化はwalkDirectoryで行われる）
-      expect(resource.path.value).toBe('secure\\data\\file.json');
+      expect(resource.path.value).toBe('secure/data/file.json');
+
+      // 既にスラッシュの場合はそのまま
+      const resource2 = createResource('secure/data/file2.json', 2048);
+      expect(resource2.path.value).toBe('secure/data/file2.json');
     });
   });
 

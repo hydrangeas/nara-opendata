@@ -129,11 +129,15 @@ export class OpenDataRepositoryImpl implements IOpenDataRepository {
 
   /**
    * リソースを作成する
+   * パスは常にスラッシュ区切りに正規化する
    */
   private createResource(pathValue: string, sizeBytes: number): IOpenDataResource {
+    // Windows環境でもスラッシュ区切りに統一
+    const normalizedPath = pathValue.replace(/\\/g, '/');
+
     return {
-      path: { value: pathValue },
-      contentType: this.getContentTypeFromPath(pathValue),
+      path: { value: normalizedPath },
+      contentType: this.getContentTypeFromPath(normalizedPath),
       fileSize: { bytes: sizeBytes },
     };
   }
