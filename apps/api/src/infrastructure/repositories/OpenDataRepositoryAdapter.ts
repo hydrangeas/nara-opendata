@@ -1,4 +1,4 @@
-import { injectable } from 'tsyringe';
+import { injectable, inject } from 'tsyringe';
 import { OpenDataRepositoryImpl } from '@nara-opendata/infrastructure';
 import type { IOpenDataResource } from '@nara-opendata/infrastructure';
 import type { IOpenDataRepository } from '../../contexts/data/domain/repositories/IOpenDataRepository';
@@ -16,11 +16,7 @@ import { createFileSize } from '../../contexts/data/domain/value-objects/FileSiz
  */
 @injectable()
 export class OpenDataRepositoryAdapter implements IOpenDataRepository {
-  private readonly impl: OpenDataRepositoryImpl;
-
-  constructor() {
-    this.impl = new OpenDataRepositoryImpl();
-  }
+  constructor(@inject(OpenDataRepositoryImpl) private readonly impl: OpenDataRepositoryImpl) {}
 
   async findByPath(path: FilePath): Promise<OpenDataResource | null> {
     const result = await this.impl.findByPath({ value: path.value });

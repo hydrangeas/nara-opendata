@@ -24,7 +24,11 @@ import type { IAPIEndpointRepository } from './contexts/api/domain/repositories/
 
 // Import infrastructure services
 import type { IEventBus, ILogger } from '@nara-opendata/shared-kernel';
-import { InMemoryEventBus, ConsoleLogger } from '@nara-opendata/infrastructure';
+import {
+  InMemoryEventBus,
+  ConsoleLogger,
+  OpenDataRepositoryImpl,
+} from '@nara-opendata/infrastructure';
 import { OpenDataRepositoryAdapter } from './infrastructure/repositories/OpenDataRepositoryAdapter';
 
 /**
@@ -74,6 +78,10 @@ export function initializeContainer(config: IDIContainerConfig = {}): void {
 
   if (!isTestMode) {
     // Production implementations
+    // Register the infrastructure implementation
+    container.register(OpenDataRepositoryImpl, { useClass: OpenDataRepositoryImpl });
+
+    // Register the adapter
     container.register<IOpenDataRepository>(TYPES.IOpenDataRepository, {
       useClass: OpenDataRepositoryAdapter,
     });
