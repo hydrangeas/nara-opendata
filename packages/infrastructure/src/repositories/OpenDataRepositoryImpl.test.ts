@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import * as path from 'path';
 import { OpenDataRepositoryImpl } from './OpenDataRepositoryImpl';
 import type { IFilePath } from './types';
 
@@ -95,7 +96,37 @@ describe('OpenDataRepositoryImpl', () => {
       const filePath: IFilePath = { value: 'secure/319985/r5.json' };
       const fullPath = buildFullPath(filePath);
 
-      expect(fullPath).toBe('/test/data/secure/319985/r5.json');
+      expect(fullPath).toBe(path.resolve('/test/data/secure/319985/r5.json'));
+    });
+
+    it('パストラバーサル攻撃を検出する', () => {
+      process.env['DATA_DIR'] = '/test/data';
+      const newRepository = new OpenDataRepositoryImpl();
+
+      // privateメソッドにアクセスするためのワークアラウンド
+      const buildFullPath = (newRepository as any).buildFullPath.bind(newRepository);
+
+      // パストラバーサルを試みる悪意のあるパス
+      const maliciousPath: IFilePath = { value: '../../../etc/passwd' };
+
+      expect(() => buildFullPath(maliciousPath)).toThrow(
+        'Invalid file path: Path traversal detected',
+      );
+    });
+
+    it('絶対パスでのパストラバーサルを検出する', () => {
+      process.env['DATA_DIR'] = '/test/data';
+      const newRepository = new OpenDataRepositoryImpl();
+
+      // privateメソッドにアクセスするためのワークアラウンド
+      const buildFullPath = (newRepository as any).buildFullPath.bind(newRepository);
+
+      // 絶対パスを使った攻撃
+      const maliciousPath: IFilePath = { value: '/etc/passwd' };
+
+      expect(() => buildFullPath(maliciousPath)).toThrow(
+        'Invalid file path: Path traversal detected',
+      );
     });
 
     it('Windows形式のパスを正規化する', () => {

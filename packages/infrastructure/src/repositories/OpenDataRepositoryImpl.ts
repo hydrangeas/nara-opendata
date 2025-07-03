@@ -113,9 +113,18 @@ export class OpenDataRepositoryImpl implements IOpenDataRepository {
 
   /**
    * ベースディレクトリとファイルパスから完全なパスを構築する
+   * パストラバーサル攻撃を防ぐため、結果がベースディレクトリ内にあることを検証する
    */
   private buildFullPath(filePath: IFilePath): string {
-    return path.join(this.baseDir, filePath.value);
+    const fullPath = path.resolve(this.baseDir, filePath.value);
+    const resolvedBaseDir = path.resolve(this.baseDir);
+
+    // パストラバーサル攻撃の検出
+    if (!fullPath.startsWith(resolvedBaseDir)) {
+      throw new Error('Invalid file path: Path traversal detected');
+    }
+
+    return fullPath;
   }
 
   /**

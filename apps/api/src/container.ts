@@ -74,7 +74,9 @@ export function initializeContainer(config: IDIContainerConfig = {}): void {
 
   if (!isTestMode) {
     // Production implementations
-    container.register<IOpenDataRepository>(TYPES.IOpenDataRepository, OpenDataRepositoryAdapter);
+    container.register<IOpenDataRepository>(TYPES.IOpenDataRepository, {
+      useClass: OpenDataRepositoryAdapter,
+    });
 
     container.register<IRateLimitRepository>(TYPES.IRateLimitRepository, {
       useFactory: () => {
